@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -21,9 +22,6 @@ const Home = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        setLoading(true);
-        setError("");
-
         const data = await getMovies();
         setMovies(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -47,9 +45,7 @@ const Home = () => {
         const data = await getTheaters();
         setTheaters(Array.isArray(data) ? data : []);
       } catch (err) {
-        setTheaterError(
-          err.message || "Failed to load theaters"
-        );
+        setTheaterError(err.message || "Failed to load theaters");
       } finally {
         setTheaterLoading(false);
       }
@@ -83,6 +79,7 @@ const Home = () => {
 
       <section className="px-6 py-8">
         <div className="mx-auto max-w-7xl">
+
           <h1
             className="mb-6 text-2xl font-semibold"
             style={{ color: "#1090DF" }}
@@ -91,10 +88,11 @@ const Home = () => {
           </h1>
 
           <div className="mb-8 flex gap-4">
+
             <button
               type="button"
               onClick={() => setActiveTab("movie")}
-              className={`rounded-lg px-8 py-3 font-semibold transition-all duration-200 ${
+              className={`rounded-lg px-8 py-3 font-semibold ${
                 activeTab === "movie"
                   ? "bg-[#2F7FF3] text-white"
                   : "bg-white text-gray-800"
@@ -105,8 +103,10 @@ const Home = () => {
 
             <button
               type="button"
-              onClick={() => setActiveTab("theater")}
-              className={`rounded-lg px-8 py-3 font-semibold transition-all duration-200 ${
+              onClick={() => {
+                setActiveTab("theater");
+              }}
+              className={`rounded-lg px-8 py-3 font-semibold ${
                 activeTab === "theater"
                   ? "bg-[#2F7FF3] text-white"
                   : "bg-white text-gray-800"
@@ -114,6 +114,7 @@ const Home = () => {
             >
               Theater
             </button>
+
           </div>
 
           {activeTab === "movie" && (
@@ -147,6 +148,7 @@ const Home = () => {
                 movies.length > 0 && (
                   <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-4">
                     {movies.map((movie, index) => {
+
                       const movieId =
                         movie.id ||
                         movie._id ||
@@ -173,26 +175,19 @@ const Home = () => {
                           className="group cursor-pointer"
                         >
                           <div className="h-72 w-full overflow-hidden rounded-2xl">
+
                             {image ? (
                               <img
                                 src={image}
                                 alt={title}
-                                className="
-                                  h-full
-                                  w-full
-                                  rounded-2xl
-                                  object-cover
-                                  transition-transform
-                                  duration-500
-                                  ease-out
-                                  group-hover:scale-110
-                                "
+                                className="h-full w-full rounded-2xl object-cover transition-transform duration-500 group-hover:scale-110"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
                                 No Image
                               </div>
                             )}
+
                           </div>
 
                           <h2 className="mt-4 text-center text-base font-semibold text-[#1090DF]">
@@ -208,6 +203,7 @@ const Home = () => {
 
           {activeTab === "theater" && (
             <div className="space-y-2">
+
               {theaterLoading && (
                 <div className="rounded-xl bg-white/70 py-10 text-center">
                   <p className="text-gray-500">
@@ -236,6 +232,7 @@ const Home = () => {
                 !theaterError &&
                 theaters.length > 0 &&
                 theaters.map((theater, index) => {
+
                   const theaterId =
                     theater.id ||
                     theater.theaterId ||
@@ -265,40 +262,17 @@ const Home = () => {
                       onClick={() =>
                         navigate(`/theaters/${theaterId}`)
                       }
-                      className="
-                        group
-                        flex
-                        min-h-[66px]
-                        w-full
-                        cursor-pointer
-                        items-center
-                        justify-between
-                        rounded-md
-                        border
-                        border-gray-200
-                        bg-white/40
-                        px-3
-                        py-2
-                        transition-all
-                        duration-200
-                        hover:border-[#1090DF]
-                        hover:bg-white
-                      "
+                      className="group flex min-h-[66px] w-full cursor-pointer items-center justify-between rounded-md border border-gray-200 bg-white/40 px-3 py-2 transition-all duration-200 hover:border-[#1090DF] hover:bg-white"
                     >
+
                       <div className="min-w-0 flex-1">
-                        <h2
-                          className="
-                            truncate
-                            whitespace-nowrap
-                            text-sm
-                            font-semibold
-                            text-[#1090DF]
-                          "
-                        >
+
+                        <h2 className="truncate whitespace-nowrap text-sm font-semibold text-[#1090DF]">
                           {name}
                         </h2>
 
                         <div className="mt-2 flex items-start gap-2">
+
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
@@ -312,6 +286,7 @@ const Home = () => {
                               strokeLinejoin="round"
                               d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z"
                             />
+
                             <circle
                               cx="12"
                               cy="9"
@@ -320,41 +295,34 @@ const Home = () => {
                           </svg>
 
                           <div className="min-w-0 text-[10px] leading-3 text-gray-500">
+
                             <p className="truncate">
                               {address}
                             </p>
 
-                            {pincode && <p>{pincode}</p>}
+                            {pincode && (
+                              <p>{pincode}</p>
+                            )}
+
                           </div>
+
                         </div>
+
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          navigate(
-                            `/theaters/${theaterId}`
-                          );
-                        }}
-                        className="
-                          ml-4
-                          shrink-0
-                          text-xl
-                          font-light
-                          text-[#1090DF]
-                          transition-transform
-                          duration-200
-                          group-hover:translate-x-1
-                        "
+                      <span
+                        className="ml-4 shrink-0 text-xl font-light text-[#1090DF] transition-transform duration-200 group-hover:translate-x-1"
                       >
                         ›
-                      </button>
+                      </span>
+
                     </div>
                   );
                 })}
+
             </div>
           )}
+
         </div>
       </section>
     </main>

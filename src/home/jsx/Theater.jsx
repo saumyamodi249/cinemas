@@ -10,22 +10,12 @@ const Theater = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ==============================
-  // FETCH THEATERS
-  // ==============================
   useEffect(() => {
     const fetchTheaters = async () => {
       try {
-        setLoading(true);
-        setError("");
-
         const data = await getTheaters();
-
-        console.log("Theaters API Data:", data);
-
         setTheaters(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Theater API Error:", err);
         setError(err.message || "Failed to load theaters");
       } finally {
         setLoading(false);
@@ -35,23 +25,9 @@ const Theater = () => {
     fetchTheaters();
   }, []);
 
-  // ==============================
-  // THEATER CLICK
-  // ==============================
-  const handleTheaterClick = (theaterId) => {
-    if (!theaterId) {
-      console.error("Theater ID is missing");
-      return;
-    }
-
-    console.log("Opening Theater:", theaterId);
-
-    navigate(`/theaters/${theaterId}`);
-  };
-
   return (
     <main
-      className="h-screen overflow-y-auto hide-scrollbar"
+      className="min-h-screen overflow-y-auto hide-scrollbar"
       style={{
         background: `
           radial-gradient(
@@ -74,9 +50,6 @@ const Theater = () => {
 
       <section className="px-6 py-8">
         <div className="mx-auto max-w-7xl">
-          {/* ==============================
-              TITLE
-          ============================== */}
           <h1
             className="mb-8 text-2xl font-semibold"
             style={{ color: "#1090DF" }}
@@ -84,34 +57,22 @@ const Theater = () => {
             Theaters
           </h1>
 
-          {/* ==============================
-              LOADING
-          ============================== */}
           {loading && (
             <div className="py-10 text-center text-gray-500">
               Loading theaters...
             </div>
           )}
 
-          {/* ==============================
-              ERROR
-          ============================== */}
           {error && !loading && (
             <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>
           )}
 
-          {/* ==============================
-              EMPTY
-          ============================== */}
           {!loading && !error && theaters.length === 0 && (
             <div className="py-10 text-center text-gray-500">
               No theaters found.
             </div>
           )}
 
-          {/* ==============================
-              THEATER LIST
-          ============================== */}
           {!loading && !error && theaters.length > 0 && (
             <div className="space-y-2">
               {theaters.map((theater, index) => {
@@ -136,15 +97,7 @@ const Theater = () => {
                 return (
                   <div
                     key={theaterId || index}
-                    onClick={() => handleTheaterClick(theaterId)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        handleTheaterClick(theaterId);
-                      }
-                    }}
+                    onClick={() => navigate(`/theaters/${theaterId}`)}
                     className="
                       group
                       flex
@@ -165,58 +118,36 @@ const Theater = () => {
                       hover:bg-[#e6f5ff]
                     "
                   >
-                    {/* ==============================
-                        LEFT
-                    ============================== */}
                     <div className="min-w-0">
-                      {/* Theater Name */}
                       <h2 className="text-sm font-semibold text-[#1090DF]">
                         {name}
                       </h2>
 
-                      {/* Location */}
-                      <div className="mb-2 flex items-start gap-2">
-                        {/* Location Icon */}
+                      <div className="mb-2 mt-1 flex items-start gap-2">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="1.5"
-                          className="
-                            mt-0.5
-                            h-4
-                            w-4
-                            shrink-0
-                            text-gray-500
-                          "
+                          className="mt-0.5 h-4 w-4 shrink-0 text-gray-500"
                         >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z"
                           />
-
                           <circle cx="12" cy="9" r="2.2" />
                         </svg>
 
                         <div className="text-[10px] leading-3 text-gray-500">
                           <p>{address}</p>
-
                           {pincode && <p>{pincode}</p>}
                         </div>
                       </div>
                     </div>
 
-                    {/* ==============================
-                        ARROW
-                    ============================== */}
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleTheaterClick(theaterId);
-                      }}
+                    <span
                       className="
                         ml-4
                         shrink-0
@@ -229,7 +160,7 @@ const Theater = () => {
                       "
                     >
                       ›
-                    </button>
+                    </span>
                   </div>
                 );
               })}

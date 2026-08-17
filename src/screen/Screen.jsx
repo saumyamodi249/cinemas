@@ -89,52 +89,62 @@ const Screen = () => {
   // FETCH SCREEN API
   // =====================================================
 
+  const showTimeId = bookingState.showTimeId || null;
+
   useEffect(() => {
-    const fetchScreens = async () => {
+    const loadScreen = async () => {
       try {
         setLoading(true);
         setError("");
 
-        if (!theaterId) {
-          throw new Error(
-            "Theater ID is missing. Unable to load seats."
-          );
+        const screenData = bookingState.screen;
+
+        console.log("========== SCREEN PAGE ==========");
+        console.log("Theater ID:", theaterId);
+        console.log("Screen ID from state:", bookingState.screenId);
+        console.log("Screen object:", screenData);
+        console.log("================================");
+
+        if (!screenData) {
+          throw new Error("Screen information is missing.");
         }
 
-        const response = await getTheaterScreens(theaterId);
-
-        console.log("SCREEN API RESPONSE:", response);
-
-        const screenList = normalizeScreens(response);
-
-        console.log("NORMALIZED SCREENS:", screenList);
-
-        setScreens(screenList);
-
-        if (screenList.length > 0) {
-          setSelectedScreen(screenList[0]);
-        }
+        setScreens([screenData]);
+        setSelectedScreen(screenData);
       } catch (err) {
-        console.error("SCREEN API ERROR:", err);
-
-        setError(
-          err?.message || "Failed to load screen details."
-        );
+        console.error("SCREEN LOAD ERROR:", err);
+        setError(err?.message || "Failed to load screen details.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchScreens();
-  }, [theaterId]);
+    loadScreen();
+  }, []);
 
   // =====================================================
   // SCREEN LAYOUT
   // =====================================================
 
   const layout = useMemo(() => {
-    return getScreenLayout(selectedScreen);
-  }, [selectedScreen]);
+    if (!selectedScreen) {
+      return [];
+    }
+
+    const screenData = {
+      ...selectedScreen.screen,
+      bookedSeats: selectedScreen.bookedSeats || [],
+    };
+
+    console.log("========== LAYOUT DEBUG ==========");
+    console.log("Screen ID:", screenData.id);
+    console.log("Screen Number:", screenData.screenNumber);
+    console.log("Raw Layout:", screenData.layout);
+    console.log("Booked Seats:", screenData.bookedSeats);
+    console.log("===================================");
+
+    return getScreenLayout(screenData, showTimeId);
+  }, [selectedScreen, showTimeId]);
 
   // =====================================================
   // TOTAL PRICE
@@ -150,8 +160,7 @@ const Screen = () => {
   // EXACT SEAT COUNT CHECK
   // =====================================================
 
-  const canPay =
-    selectedSeats.length === seatCount;
+  const canPay = selectedSeats.length === seatCount;
 
   // =====================================================
   // SELECT / DESELECT SEAT
@@ -174,11 +183,7 @@ const Screen = () => {
 
       price: sectionPrice,
 
-      row:
-        row?.name ||
-        row?.row ||
-        row?.rowName ||
-        "",
+      row: row?.name || row?.row || row?.rowName || "",
     };
 
     setSelectedSeats((previousSeats) => {
@@ -187,7 +192,7 @@ const Screen = () => {
       // =================================================
 
       const alreadySelected = previousSeats.some(
-        (item) => item.id === selectedSeatData.id
+        (item) => item.id === selectedSeatData.id,
       );
 
       // =================================================
@@ -195,9 +200,7 @@ const Screen = () => {
       // =================================================
 
       if (alreadySelected) {
-        return previousSeats.filter(
-          (item) => item.id !== selectedSeatData.id
-        );
+        return previousSeats.filter((item) => item.id !== selectedSeatData.id);
       }
 
       // =================================================
@@ -212,10 +215,7 @@ const Screen = () => {
       // ADD NEW SEAT
       // =================================================
 
-      return [
-        ...previousSeats,
-        selectedSeatData,
-      ];
+      return [...previousSeats, selectedSeatData];
     });
   };
 
@@ -282,10 +282,7 @@ const Screen = () => {
 
   if (loading) {
     return (
-      <main
-        className="min-h-screen"
-        style={backgroundStyle}
-      >
+      <main className="min-h-screen" style={backgroundStyle}>
         <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
             <div
@@ -302,9 +299,7 @@ const Screen = () => {
               "
             />
 
-            <p className="text-gray-500">
-              Loading seats...
-            </p>
+            <p className="text-gray-500">Loading seats...</p>
           </div>
         </div>
       </main>
@@ -317,10 +312,7 @@ const Screen = () => {
 
   if (error) {
     return (
-      <main
-        className="min-h-screen"
-        style={backgroundStyle}
-      >
+      <main className="min-h-screen" style={backgroundStyle}>
         <div
           className="
             flex
@@ -331,9 +323,7 @@ const Screen = () => {
           "
         >
           <div className="text-center">
-            <p className="mb-5 text-red-500">
-              {error}
-            </p>
+            <p className="mb-5 text-red-500">{error}</p>
 
             <button
               type="button"
@@ -367,16 +357,11 @@ const Screen = () => {
 
   return (
     <main
-      className="
-        min-h-screen
-        overflow-y-auto
-        hide-scrollbar
-      "
+      className="min-h-screen overflow-y-auto hide-scrollbar"
       style={backgroundStyle}
     >
       <section className="px-6 pb-10 pt-8">
         <div className="mx-auto max-w-6xl">
-
           {/* =================================================
               BACK
           ================================================= */}
@@ -408,9 +393,7 @@ const Screen = () => {
                 text-[#1090DF]
               "
             >
-              {movie?.name ||
-                movie?.title ||
-                "Select Your Seat"}
+              {movie?.name || movie?.title || "Select Your Seat"}
             </h1>
 
             <div
@@ -424,13 +407,9 @@ const Screen = () => {
                 text-gray-500
               "
             >
-              {theater?.name && (
-                <span>{theater.name}</span>
-              )}
+              {theater?.name && <span>{theater.name}</span>}
 
-              {time && (
-                <span>{time}</span>
-              )}
+              {time && <span>{time}</span>}
             </div>
 
             {/* REQUIRED SEAT COUNT */}
@@ -449,21 +428,13 @@ const Screen = () => {
                 py-2
               "
             >
-              <span className="text-sm text-gray-500">
-                Seats required:
-              </span>
+              <span className="text-sm text-gray-500">Seats required:</span>
 
-              <span className="font-semibold text-[#1090DF]">
-                {seatCount}
-              </span>
+              <span className="font-semibold text-[#1090DF]">{seatCount}</span>
 
-              <span className="text-gray-400">
-                |
-              </span>
+              <span className="text-gray-400">|</span>
 
-              <span className="text-sm text-gray-500">
-                Selected:
-              </span>
+              <span className="text-sm text-gray-500">Selected:</span>
 
               <span
                 className={`font-semibold ${
@@ -496,21 +467,15 @@ const Screen = () => {
 
               <div className="flex flex-wrap gap-3">
                 {screens.map((screen, index) => {
-                  const screenId =
-                    screen?.id ||
-                    screen?._id ||
-                    index;
+                  const screenId = screen?.id || screen?._id || index;
 
-                  const isSelected =
-                    selectedScreen === screen;
+                  const isSelected = selectedScreen === screen;
 
                   return (
                     <button
                       key={screenId}
                       type="button"
-                      onClick={() =>
-                        handleScreenChange(screen)
-                      }
+                      onClick={() => handleScreenChange(screen)}
                       className={`
                         rounded-md
                         border
@@ -562,7 +527,6 @@ const Screen = () => {
               md:px-10
             "
           >
-
             {/* SCREEN */}
 
             <div className="mb-10">
@@ -595,234 +559,80 @@ const Screen = () => {
             ================================================= */}
 
             {layout.length === 0 ? (
-              <div
-                className="
-                  flex
-                  min-h-[250px]
-                  items-center
-                  justify-center
-                  text-center
-                "
-              >
-                <p className="text-gray-500">
-                  No seat layout available.
-                </p>
+              <div className="flex min-h-[250px] items-center justify-center text-center">
+                <p className="text-gray-500">No seat layout available.</p>
               </div>
             ) : (
-              <div className="space-y-10">
-                {layout.map(
-                  (section, sectionIndex) => {
-                    const sectionName =
-                      getSectionName(section);
+              <div>
+                {layout.map((section, sectionIndex) => {
+                  console
+                  const sectionName = getSectionName(section);
+                  const sectionPrice = getSectionPrice(section);
+                  const rows = getSectionRows(section);
 
-                    const sectionPrice =
-                      getSectionPrice(section);
+                  return (
+                    <div
+                      key={`${sectionName}-${sectionIndex}`}
+                      className="mb-8"
+                    >
+                      {sectionIndex > 0 && (
+                        <div className="mb-6 border-t border-gray-200" />
+                      )}
 
-                    const rows =
-                      getSectionRows(section);
+                      <p className="mb-4 text-xs text-gray-400">
+                        ₹{sectionPrice} {sectionName}
+                      </p>
 
-                    return (
-                      <div
-                        key={`${sectionName}-${sectionIndex}`}
-                        className="
-                          rounded-xl
-                          border
-                          border-gray-200
-                          bg-white
-                          p-5
-                        "
-                      >
+                      <div className="flex flex-col items-center gap-3">
+                        {rows.map((row) => {
+                          const seats = getSeatsFromRow(row);
 
-                        {/* SECTION HEADER */}
-
-                        <div
-                          className="
-                            mb-5
-                            flex
-                            flex-wrap
-                            items-center
-                            justify-between
-                            gap-2
-                          "
-                        >
-                          <h2
-                            className="
-                              text-lg
-                              font-bold
-                              text-[#1090DF]
-                            "
-                          >
-                            {sectionName}
-                          </h2>
-
-                          <span
-                            className="
-                              rounded-full
-                              bg-[#C2E8FF]
-                              px-3
-                              py-1
-                              text-sm
-                              font-semibold
-                              text-[#1090DF]
-                            "
-                          >
-                            ₹{sectionPrice}
-                          </span>
-                        </div>
-
-                        {/* ROWS */}
-
-                        <div
-                          className="
-                            flex
-                            flex-col
-                            items-center
-                            gap-3
-                          "
-                        >
-                          {rows.map(
-                            (row, rowIndex) => {
-                              const seats =
-                                getSeatsFromRow(
-                                  row,
-                                  rowIndex
+                          return (
+                            <div
+                              key={row.name}
+                              className="flex items-center gap-2"
+                            >
+                              {seats.map((seat) => {
+                                const isSelected = selectedSeats.some(
+                                  (item) => item.id === seat.id,
                                 );
 
-                              const rowName =
-                                row?.name ||
-                                row?.row ||
-                                row?.rowName ||
-                                String.fromCharCode(
-                                  65 + rowIndex
+                                return (
+                                  <button
+                                    key={seat.id}
+                                    type="button"
+                                    disabled={!seat.available}
+                                    onClick={() =>
+                                      handleSeatClick({ seat, section, row })
+                                    }
+                                    title={
+                                      seat.available
+                                        ? `${seat.label} - ₹${sectionPrice}`
+                                        : `${seat.label} - Unavailable`
+                                    }
+                                    className={`
+                          flex h-8 w-8 items-center justify-center rounded-md
+                          border text-[10px] font-medium transition-all duration-150
+                          ${
+                            !seat.available
+                              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-300"
+                              : isSelected
+                                ? "border-[#1090DF] bg-[#1090DF] text-white shadow-md"
+                                : "border-gray-300 bg-white text-gray-600 hover:border-[#1090DF] hover:bg-[#C2E8FF] hover:text-[#1090DF]"
+                          }
+                        `}
+                                  >
+                                    {seat.label}
+                                  </button>
                                 );
-
-                              return (
-                                <div
-                                  key={`${sectionIndex}-${rowIndex}`}
-                                  className="
-                                    flex
-                                    w-full
-                                    items-center
-                                    justify-center
-                                    gap-2
-                                    overflow-x-auto
-                                    pb-1
-                                  "
-                                >
-
-                                  {/* ROW LABEL */}
-
-                                  <span
-                                    className="
-                                      w-6
-                                      shrink-0
-                                      text-center
-                                      text-xs
-                                      font-semibold
-                                      text-gray-400
-                                    "
-                                  >
-                                    {rowName}
-                                  </span>
-
-                                  {/* SEATS */}
-
-                                  <div
-                                    className="
-                                      flex
-                                      shrink-0
-                                      gap-2
-                                    "
-                                  >
-                                    {seats.map(
-                                      (seat) => {
-                                        const isSelected =
-                                          selectedSeats.some(
-                                            (item) =>
-                                              item.id ===
-                                              seat.id
-                                          );
-
-                                        const isAvailable =
-                                          seat.available !==
-                                          false;
-
-                                        return (
-                                          <button
-                                            key={seat.id}
-                                            type="button"
-                                            disabled={
-                                              !isAvailable
-                                            }
-                                            onClick={() =>
-                                              handleSeatClick(
-                                                {
-                                                  seat,
-                                                  section,
-                                                  row,
-                                                }
-                                              )
-                                            }
-                                            title={
-                                              isAvailable
-                                                ? `${seat.label} - ₹${sectionPrice}`
-                                                : `${seat.label} - Unavailable`
-                                            }
-                                            className={`
-                                              flex
-                                              h-9
-                                              w-9
-                                              shrink-0
-                                              items-center
-                                              justify-center
-                                              rounded-md
-                                              border
-                                              text-[11px]
-                                              font-medium
-                                              transition-all
-                                              duration-150
-
-                                              ${
-                                                !isAvailable
-                                                  ? `
-                                                    cursor-not-allowed
-                                                    border-gray-200
-                                                    bg-gray-100
-                                                    text-gray-300
-                                                  `
-                                                  : isSelected
-                                                    ? `
-                                                      border-[#1090DF]
-                                                      bg-[#1090DF]
-                                                      text-white
-                                                      shadow-md
-                                                    `
-                                                    : `
-                                                      border-gray-300
-                                                      bg-white
-                                                      text-gray-600
-                                                      hover:border-[#1090DF]
-                                                      hover:bg-[#C2E8FF]
-                                                      hover:text-[#1090DF]
-                                                    `
-                                              }
-                                            `}
-                                          >
-                                            {seat.label}
-                                          </button>
-                                        );
-                                      }
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
+                              })}
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  }
-                )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -902,14 +712,9 @@ const Screen = () => {
               sm:items-center
               sm:justify-between
 
-              ${
-                canPay
-                  ? "border-[#1090DF]"
-                  : "border-gray-200"
-              }
+              ${canPay ? "border-[#1090DF]" : "border-gray-200"}
             `}
           >
-
             {/* SELECTED SEATS */}
 
             <div>
@@ -931,9 +736,7 @@ const Screen = () => {
                 "
               >
                 {selectedSeats.length > 0
-                  ? selectedSeats
-                      .map((seat) => seat.label)
-                      .join(", ")
+                  ? selectedSeats.map((seat) => seat.label).join(", ")
                   : "No seats selected"}
               </p>
 
@@ -945,24 +748,13 @@ const Screen = () => {
                   text-xs
                   font-medium
 
-                  ${
-                    canPay
-                      ? "text-green-600"
-                      : "text-gray-500"
-                  }
+                  ${canPay ? "text-green-600" : "text-gray-500"}
                 `}
               >
                 {canPay
                   ? "All required seats selected ✓"
-                  : `Select ${
-                      seatCount -
-                      selectedSeats.length
-                    } more seat${
-                      seatCount -
-                        selectedSeats.length ===
-                      1
-                        ? ""
-                        : "s"
+                  : `Select ${seatCount - selectedSeats.length} more seat${
+                      seatCount - selectedSeats.length === 1 ? "" : "s"
                     }`}
               </p>
             </div>
@@ -1034,7 +826,6 @@ const Screen = () => {
               </button>
             </div>
           </div>
-
         </div>
       </section>
     </main>
@@ -1042,4 +833,3 @@ const Screen = () => {
 };
 
 export default Screen;
-

@@ -1,34 +1,50 @@
-const API_BASE_URL =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000";
+const THEATER_API =
+  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000/theaters";
 
 const getHeaders = () => {
-  const token =
-    localStorage.getItem("token") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("authToken");
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("Login token not found");
+  }
 
   return {
     Accept: "*/*",
     "Content-Type": "application/json",
-    ...(token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {}),
+    Authorization: `Bearer ${token}`,
   };
 };
 
-export const getTheaterDetails = async (
-  theaterId
-) => {
-  if (!theaterId) {
+// GET ALL THEATERS
+export const getTheaters = async () => {
+  const response = await fetch(THEATER_API, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
     throw new Error(
-      "Theater ID is missing."
+      `Failed to fetch theaters: ${response.status}`
     );
   }
 
+  const result = await response.json();
+
+  return Array.isArray(result)
+    ? result
+    : Array.isArray(result?.data)
+    ? result.data
+    : [];
+};
+
+// GET SINGLE THEATER
+export const getTheaterDetails = async (theaterId) => {
+  if (!theaterId) {
+    throw new Error("Theater ID is missing");
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/theaters/${theaterId}`,
+    `${THEATER_API}/${theaterId}`,
     {
       method: "GET",
       headers: getHeaders(),
@@ -37,31 +53,79 @@ export const getTheaterDetails = async (
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch theater details. Status: ${response.status}`
+      `Failed to fetch theater details: ${response.status}`
     );
   }
 
-  return await response.json();
+  const result = await response.json();
+
+  return result?.data || result;
 };
 
+// GET MOVIES OF THEATER
+export const getTheaterMovies = async (theaterId) => {
+  if (!theaterId) {
+    throw new Error("Theater ID is missing");
+  }
+
+  const response = await fetch(
+    `${THEATER_API}/${theaterId}/movies`,
+    {
+      method: "GET",
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch theater movies: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+
+  console.log("THEATER MOVIES API RESPONSE:", result);
+
+  // API response can be:
+  // [...]
+  // { data: [...] }
+  // { movies: [...] }
+  // { data: { movies: [...] } }
+
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  if (Array.isArray(result?.data)) {
+    return result.data;
+  }
+
+  if (Array.isArray(result?.movies)) {
+    return result.movies;
+  }
+
+  if (Array.isArray(result?.data?.movies)) {
+    return result.data.movies;
+  }
+
+  return [];
+};
+
+// GET SHOWS OF THEATER
 export const getTheaterShows = async (
   theaterId,
   date
 ) => {
   if (!theaterId) {
-    throw new Error(
-      "Theater ID is missing."
-    );
+    throw new Error("Theater ID is missing");
   }
 
   if (!date) {
-    throw new Error(
-      "Show date is missing."
-    );
+    throw new Error("Show date is missing");
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/theaters/${theaterId}/shows?date=${encodeURIComponent(
+    `${THEATER_API}/${theaterId}/shows?date=${encodeURIComponent(
       date
     )}`,
     {
@@ -72,9 +136,29 @@ export const getTheaterShows = async (
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch theater shows. Status: ${response.status}`
+      `Failed to fetch theater shows: ${response.status}`
     );
   }
 
-  return await response.json();
+  const result = await response.json();
+
+  console.log("THEATER SHOWS API RESPONSE:", result);
+
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  if (Array.isArray(result?.data)) {
+    return result.data;
+  }
+
+  if (Array.isArray(result?.shows)) {
+    return result.shows;
+  }
+
+  if (Array.isArray(result?.data?.shows)) {
+    return result.data.shows;
+  }
+
+  return [];
 };

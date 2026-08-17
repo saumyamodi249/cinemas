@@ -25,6 +25,7 @@ function App() {
 
         <Route path="/theaters" element={<Theater />} />
         <Route path="/theaters/:id" element={<TheaterDetails />} />
+        <Route path="/screen/:screenId" element={<Screen />} />
 
         <Route path="/screen/:theaterId" element={<Screen />} />
       </Routes>
