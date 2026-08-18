@@ -24,9 +24,6 @@ const Screen = () => {
   const theater = bookingState.theater || null;
   const date = bookingState.date || null;
   const time = bookingState.time || null;
-  
-
-
 
   useEffect(() => {
     const getPrice = async () => {
@@ -271,41 +268,44 @@ const Screen = () => {
       return;
     }
 
-    // IMPORTANT:
-    // Price showTime.price[] se aa raha hai
     const sectionPrice = getPriceFromShowTime(section);
-
     const sectionName = getSectionName(section);
 
     const selectedSeatData = {
       ...seat,
-
       section: sectionName,
-
       sectionPrice,
-
       price: sectionPrice,
-
       row: row?.name || row?.row || row?.rowName || "",
     };
 
     setSelectedSeats((previousSeats) => {
-      // Already selected
+      // ============================================
+      // ALREADY SELECTED → UNSELECT
+      // ============================================
+
       const alreadySelected = previousSeats.some(
         (item) => item.id === selectedSeatData.id,
       );
 
-      // Deselect
       if (alreadySelected) {
         return previousSeats.filter((item) => item.id !== selectedSeatData.id);
       }
 
-      // Maximum reached
+      // ============================================
+      // LIMIT REACHED
+      // REMOVE FIRST SELECTED SEAT
+      // THEN ADD NEW SEAT
+      // ============================================
+
       if (previousSeats.length >= seatCount) {
-        return previousSeats;
+        return [...previousSeats.slice(1), selectedSeatData];
       }
 
-      // Add
+      // ============================================
+      // LIMIT NOT REACHED → NORMAL ADD
+      // ============================================
+
       return [...previousSeats, selectedSeatData];
     });
   };
@@ -446,15 +446,19 @@ const Screen = () => {
             onClick={() => navigate(-1)}
             aria-label="Go back"
             className="
-              mb-1
-              flex
-              items-center
-              text-3xl
-              leading-none
-              text-[#1090DF]
-              transition
-              hover:opacity-70
-            "
+    mb-1
+    flex
+    items-center
+    text-4xl
+    font-light
+    leading-none
+    text-[#1090DF]
+    transition
+    hover:opacity-70
+    translate-y-11
+    -translate-x-12
+
+  "
           >
             ←
           </button>
@@ -465,13 +469,13 @@ const Screen = () => {
 
           <h1
             className="
-              text-4xl
-              font-bold
-              uppercase
-              tracking-tight
-              text-[#1090DF]
-              sm:text-5xl
-            "
+      text-4xl
+      font-bold
+      uppercase
+      tracking-tight
+      text-[#1090DF]
+      sm:text-5xl
+    "
           >
             Select Seat
           </h1>
