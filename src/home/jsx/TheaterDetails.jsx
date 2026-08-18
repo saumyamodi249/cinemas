@@ -10,6 +10,25 @@ import {
 } from "../js/Theater";
 import SeatSelection from "../../common/SeatSelection";
 
+const formatApiDate = (date) => {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${month}-${day}-${year}`;
+};
+
+const getNextThreeDates = () => {
+  const today = new Date();
+
+  return Array.from({ length: 3 }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + index);
+
+    return formatApiDate(date);
+  });
+};
+
 const TheaterDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,7 +39,7 @@ const TheaterDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [selectedDate, setSelectedDate] = useState("08-13-2026");
+  const [selectedDate, setSelectedDate] = useState(getNextThreeDates());
 
   /*
    * SELECTED SHOWTIME
@@ -37,7 +56,7 @@ const TheaterDetails = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
 
-  const dates = ["08-13-2026", "08-14-2026", "08-15-2026"];
+  const dates = getNextThreeDates();
 
   useEffect(() => {
     if (!id) return;
@@ -51,9 +70,6 @@ const TheaterDetails = () => {
           getTheaterDetails(id),
           getTheaterShows(id, selectedDate),
         ]);
-
-        console.log("THEATER DATA:", theaterData);
-        console.log("SHOW DATA:", showData);
 
         setTheater(
           theaterData?.data || theaterData?.theater || theaterData || null,
@@ -142,15 +158,12 @@ const TheaterDetails = () => {
       setBookingError("Please select a showtime first.");
       return;
     }
-    console.log("slehfjhjfh", selectedShow);
 
     try {
       setBookingLoading(true);
       setBookingError("");
 
       const byDateData = await getShowTimesByDate(movie.id, selectedDate);
-
-      console.log("BY-DATE DATA:", byDateData);
 
       const theatersList = Array.isArray(byDateData)
         ? byDateData
@@ -173,7 +186,6 @@ const TheaterDetails = () => {
       if (!matchedShowtime) {
         throw new Error("Could not find the selected showtime.");
       }
-      console.log("MATCHED SHOWTIME:", matchedShowtime);
 
       const screenId = matchedShowtime.screenId;
 
@@ -184,8 +196,6 @@ const TheaterDetails = () => {
       const screenData = await getScreenById(screenId);
 
       setSelectedScreen(screenData?.data || screenData);
-
-      console.log("SCREEN DATA:", screenData);
 
       setSelectedScreen(screenData?.data || screenData);
       setIsSeatModalOpen(true);
@@ -211,14 +221,6 @@ const TheaterDetails = () => {
       selectedScreen?.screen?._id ||
       selectedScreen?.screen?.screenId ||
       null;
-      console.log(selectedScreen,"huuyuyuy")
-
-    console.log("========== SCREEN DEBUG ==========");
-    console.log("Theater ID:", id);
-    console.log("Show Time ID:", selectedShow.showTimeId);
-    console.log("Selected Screen:", selectedScreen);
-    console.log("FINAL SCREEN ID:", screenId);
-    console.log("=================================");
 
     if (!screenId) {
       console.error("SCREEN ID NOT FOUND");
