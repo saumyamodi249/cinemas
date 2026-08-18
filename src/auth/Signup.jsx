@@ -40,7 +40,6 @@ const Signup = () => {
                 formData.password
             );
 
-            console.log("Signup Response:", data);
 
             setMessage("Account created successfully!");
 

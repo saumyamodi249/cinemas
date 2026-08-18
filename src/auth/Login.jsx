@@ -37,7 +37,6 @@ const Login = () => {
         formData.password
       );
 
-      console.log("Login Response:", response);
 
       // API response se token nikalo
       const token = response?.data?.accessToken;

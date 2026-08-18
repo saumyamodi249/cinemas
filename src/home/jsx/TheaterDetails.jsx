@@ -39,7 +39,7 @@ const TheaterDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [selectedDate, setSelectedDate] = useState(getNextThreeDates());
+  const [selectedDate, setSelectedDate] = useState(getNextThreeDates()[0]);
 
   /*
    * SELECTED SHOWTIME

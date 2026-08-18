@@ -31,11 +31,26 @@ export const getTheaterScreens = async (screenId) => {
 
   const data = await response.json();
 
-  console.log("SCREEN BY ID DATA:", data);
 
   return data;
 };
 
+// export const getDataForPrice = async (screenId) => {
+//   const response = await fetch(`${API_BASE_URL}/screens/${screenId}`, {
+//     method: "GET",
+//     headers: getHeaders(),
+//   });
+
+//   if (!response.ok) {
+//     throw new Error(`Failed to fetch screen: ${response.status}`);
+//   }
+
+//   const data = await response.json();
+
+//   console.log("SCREEN BY ID DATA:", data);
+
+//   return data;
+// };
 /*
 =====================================================
 NORMALIZE SCREENS
@@ -175,42 +190,6 @@ export const getSectionName = (section) => section?.type || "";
 export const getSectionPrice = (section) => section?.price ?? 0;
 export const getSectionRows = (section) => section?.rows || [];
 export const getSeatsFromRow = (row) => row?.seats || [];
-
-/*
-=====================================================
-GET SCREEN LAYOUT
-=====================================================
-*/
-
-/*
-=====================================================
-GET SECTION NAME
-=====================================================
-*/
-
-/*
-=====================================================
-GET SECTION PRICE
-=====================================================
-*/
-
-/*
-=====================================================
-GET ROWS FROM SECTION
-=====================================================
-*/
-
-/*
-=====================================================
-CONVERT ROW INTO SEATS
-=====================================================
-*/
-
-/*
-=====================================================
-NORMALIZE INDIVIDUAL SEAT
-=====================================================
-*/
 
 export const normalizeSeat = (seat, rowIndex = 0, seatIndex = 0) => {
   /*

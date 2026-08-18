@@ -2,21 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  getTheaterScreens,
-  normalizeScreens,
   getScreenLayout,
   getSectionName,
-  getSectionPrice,
   getSectionRows,
   getSeatsFromRow,
+  getTheaterScreens,
 } from "./Screen.js";
 
 const Screen = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [price, setprice] = useState();
 
   // =====================================================
-  // BOOKING DATA FROM PREVIOUS PAGE
+  // BOOKING DATA
   // =====================================================
 
   const bookingState = location.state || {};
@@ -25,11 +24,32 @@ const Screen = () => {
   const theater = bookingState.theater || null;
   const date = bookingState.date || null;
   const time = bookingState.time || null;
+  console.log(bookingState.screenId, "screen id");
+  console.log(bookingState.showTimeId);
 
-  /*
-    SeatSelection se jitni seats user ne choose ki hain,
-    utni hi seats Screen page par select karni compulsory hain.
-  */
+  // const priceData = getTheaterScreens(bookingState.screenId)
+  //   .then((priceData) => {
+  //     console.log("price", priceData.data);
+  //   })
+  //   .catch((error) => {
+  //     console.error(error);
+  //   });
+  // console.log("price", priceData);
+
+  useEffect(() => {
+    const getPrice = async () => {
+      try {
+        const priceData = await getTheaterScreens(bookingState.screenId);
+      } catch (error) {
+        console.error("Price fetch error:", error);
+      }
+    };
+
+    if (bookingState.screenId) {
+      getPrice();
+    }
+  }, [bookingState.screenId]);
+
   const seatCount = Number(bookingState.seatCount) || 1;
 
   // =====================================================
@@ -42,6 +62,19 @@ const Screen = () => {
     theater?._id ||
     theater?.theaterId ||
     "";
+
+  const showTimeId =
+    bookingState.showTimeId ||
+    bookingState.showId ||
+    bookingState.show?.id ||
+    null;
+
+  // ShowTime agar previous page se aa raha hai
+  const passedShowTime =
+    bookingState.showTime ||
+    bookingState.selectedShowTime ||
+    bookingState.show ||
+    null;
 
   // =====================================================
   // SELECTED SEATS
@@ -86,10 +119,8 @@ const Screen = () => {
   };
 
   // =====================================================
-  // FETCH SCREEN API
+  // LOAD SCREEN
   // =====================================================
-
-  const showTimeId = bookingState.showTimeId || null;
 
   useEffect(() => {
     const loadScreen = async () => {
@@ -98,12 +129,7 @@ const Screen = () => {
         setError("");
 
         const screenData = bookingState.screen;
-
-        console.log("========== SCREEN PAGE ==========");
-        console.log("Theater ID:", theaterId);
-        console.log("Screen ID from state:", bookingState.screenId);
-        console.log("Screen object:", screenData);
-        console.log("================================");
+        console.log("scr data", screenData);
 
         if (!screenData) {
           throw new Error("Screen information is missing.");
@@ -113,6 +139,7 @@ const Screen = () => {
         setSelectedScreen(screenData);
       } catch (err) {
         console.error("SCREEN LOAD ERROR:", err);
+
         setError(err?.message || "Failed to load screen details.");
       } finally {
         setLoading(false);
@@ -136,15 +163,99 @@ const Screen = () => {
       bookedSeats: selectedScreen.bookedSeats || [],
     };
 
-    console.log("========== LAYOUT DEBUG ==========");
-    console.log("Screen ID:", screenData.id);
-    console.log("Screen Number:", screenData.screenNumber);
-    console.log("Raw Layout:", screenData.layout);
-    console.log("Booked Seats:", screenData.bookedSeats);
-    console.log("===================================");
-
     return getScreenLayout(screenData, showTimeId);
   }, [selectedScreen, showTimeId]);
+
+  // =====================================================
+  // FIND CURRENT SHOW TIME
+  //
+  // Priority:
+  // 1. showTime passed through navigation state
+  // 2. selectedScreen.showTimes
+  // 3. selectedScreen.screen.showTimes
+  // 4. selectedScreen itself if it contains showTimes
+  // =====================================================
+
+  const currentShowTime = useMemo(() => {
+    const possibleShowTimes = [
+      ...(Array.isArray(selectedScreen?.showTimes)
+        ? selectedScreen.showTimes
+        : []),
+
+      ...(Array.isArray(selectedScreen?.screen?.showTimes)
+        ? selectedScreen.screen.showTimes
+        : []),
+
+      ...(Array.isArray(selectedScreen?.data?.showTimes)
+        ? selectedScreen.data.showTimes
+        : []),
+    ];
+
+    // IMPORTANT:
+    // First find showTime using showTimeId / showId
+    if (showTimeId) {
+      const matchedShowTime = possibleShowTimes.find(
+        (show) => String(show?.id) === String(showTimeId),
+      );
+
+      if (matchedShowTime) {
+        return matchedShowTime;
+      }
+    }
+
+    // Fallback only if there is exactly one showTime
+    if (possibleShowTimes.length === 1) {
+      return possibleShowTimes[0];
+    }
+
+    return null;
+  }, [selectedScreen, showTimeId]);
+
+  // =====================================================
+  // SHOW TIME PRICES
+  // =====================================================
+
+  const showTimePrices = useMemo(() => {
+    const prices = currentShowTime?.price;
+
+    if (!Array.isArray(prices)) {
+      return [];
+    }
+
+    return prices;
+  }, [currentShowTime]);
+
+  // =====================================================
+  // GET PRICE FOR SECTION
+  // =====================================================
+
+  const getPriceFromShowTime = (section) => {
+    const sectionName = "Premium";
+
+    if (!currentShowTime) {
+      console.warn("No showTime found");
+      return 0;
+    }
+
+    if (!Array.isArray(currentShowTime.price)) {
+      console.warn("No price array in showTime:", currentShowTime);
+      return 0;
+    }
+
+    const normalizedSectionName = String(sectionName || "")
+      .trim()
+      .toLowerCase();
+
+    const matchedPrice = currentShowTime.price.find((item) => {
+      const layoutType = String(item?.layoutType || "")
+        .trim()
+        .toLowerCase();
+
+      return layoutType === normalizedSectionName;
+    });
+
+    return Number(matchedPrice?.price || 0);
+  };
 
   // =====================================================
   // TOTAL PRICE
@@ -157,7 +268,7 @@ const Screen = () => {
   }, [selectedSeats]);
 
   // =====================================================
-  // EXACT SEAT COUNT CHECK
+  // CAN PAY
   // =====================================================
 
   const canPay = selectedSeats.length === seatCount;
@@ -171,7 +282,10 @@ const Screen = () => {
       return;
     }
 
-    const sectionPrice = getSectionPrice(section);
+    // IMPORTANT:
+    // Price showTime.price[] se aa raha hai
+    const sectionPrice = getPriceFromShowTime(section);
+
     const sectionName = getSectionName(section);
 
     const selectedSeatData = {
@@ -187,47 +301,24 @@ const Screen = () => {
     };
 
     setSelectedSeats((previousSeats) => {
-      // =================================================
-      // CHECK IF ALREADY SELECTED
-      // =================================================
-
+      // Already selected
       const alreadySelected = previousSeats.some(
         (item) => item.id === selectedSeatData.id,
       );
 
-      // =================================================
-      // DESELECT
-      // =================================================
-
+      // Deselect
       if (alreadySelected) {
         return previousSeats.filter((item) => item.id !== selectedSeatData.id);
       }
 
-      // =================================================
-      // MAXIMUM SEATS REACHED
-      // =================================================
-
+      // Maximum reached
       if (previousSeats.length >= seatCount) {
         return previousSeats;
       }
 
-      // =================================================
-      // ADD NEW SEAT
-      // =================================================
-
+      // Add
       return [...previousSeats, selectedSeatData];
     });
-  };
-
-  // =====================================================
-  // CHANGE SCREEN
-  // =====================================================
-
-  const handleScreenChange = (screen) => {
-    setSelectedScreen(screen);
-
-    // Screen change hone par seats reset
-    setSelectedSeats([]);
   };
 
   // =====================================================
@@ -235,45 +326,9 @@ const Screen = () => {
   // =====================================================
 
   const handlePay = () => {
-    /*
-      EXACT SEAT COUNT REQUIRED
-    */
-
     if (selectedSeats.length !== seatCount) {
       return;
     }
-
-    console.log("================================");
-    console.log("BOOKING DETAILS");
-    console.log("================================");
-
-    console.log("Movie:", movie);
-    console.log("Theater:", theater);
-    console.log("Date:", date);
-    console.log("Time:", time);
-
-    console.log("Required Seats:", seatCount);
-    console.log("Selected Seats:", selectedSeats);
-    console.log("Total Price:", totalPrice);
-
-    /*
-      Future mein yahan payment page par
-      navigate kar sakte ho.
-
-      Example:
-
-      navigate("/payment", {
-        state: {
-          movie,
-          theater,
-          date,
-          time,
-          seatCount,
-          selectedSeats,
-          totalPrice,
-        },
-      });
-    */
   };
 
   // =====================================================
@@ -282,7 +337,7 @@ const Screen = () => {
 
   if (loading) {
     return (
-      <main className="min-h-screen" style={backgroundStyle}>
+      <main className="h-screen overflow-y-auto" style={backgroundStyle}>
         <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
             <div
@@ -312,7 +367,7 @@ const Screen = () => {
 
   if (error) {
     return (
-      <main className="min-h-screen" style={backgroundStyle}>
+      <main className="h-screen overflow-y-auto" style={backgroundStyle}>
         <div
           className="
             flex
@@ -357,240 +412,175 @@ const Screen = () => {
 
   return (
     <main
-      className="min-h-screen overflow-y-auto hide-scrollbar"
-      style={backgroundStyle}
+      className="
+        h-screen
+        w-full
+        overflow-y-scroll
+        overflow-x-hidden
+      "
+      style={{
+        ...backgroundStyle,
+
+        // Scrollbar Screen.jsx ke andar hi
+        scrollbarWidth: "thin",
+
+        // Important for fixed pay bar
+        position: "relative",
+      }}
     >
-      <section className="px-6 pb-10 pt-8">
-        <div className="mx-auto max-w-6xl">
+      {/* =================================================
+          MAIN CONTENT
+      ================================================= */}
+
+      <section
+        className="
+          min-h-full
+          px-5
+          pb-40
+          pt-4
+          sm:px-8
+          md:px-12
+        "
+      >
+        <div
+          className="
+            mx-auto
+            max-w-5xl
+          "
+        >
           {/* =================================================
-              BACK
+              BACK ARROW ONLY
           ================================================= */}
 
           <button
             type="button"
             onClick={() => navigate(-1)}
+            aria-label="Go back"
             className="
-              mb-6
-              text-sm
-              text-gray-500
+              mb-1
+              flex
+              items-center
+              text-3xl
+              leading-none
+              text-[#1090DF]
               transition
-              hover:text-[#1090DF]
+              hover:opacity-70
             "
           >
-            ← Back
+            ←
           </button>
 
           {/* =================================================
-              MOVIE / THEATER INFORMATION
+              TITLE
           ================================================= */}
 
-          <div className="mb-8">
-            <h1
-              className="
-                text-3xl
-                font-bold
-                uppercase
-                text-[#1090DF]
-              "
-            >
-              {movie?.name || movie?.title || "Select Your Seat"}
-            </h1>
-
-            <div
-              className="
-                mt-2
-                flex
-                flex-wrap
-                gap-x-5
-                gap-y-1
-                text-sm
-                text-gray-500
-              "
-            >
-              {theater?.name && <span>{theater.name}</span>}
-
-              {time && <span>{time}</span>}
-            </div>
-
-            {/* REQUIRED SEAT COUNT */}
-
-            <div
-              className="
-                mt-4
-                inline-flex
-                items-center
-                gap-2
-                rounded-lg
-                border
-                border-[#1090DF]
-                bg-white/80
-                px-4
-                py-2
-              "
-            >
-              <span className="text-sm text-gray-500">Seats required:</span>
-
-              <span className="font-semibold text-[#1090DF]">{seatCount}</span>
-
-              <span className="text-gray-400">|</span>
-
-              <span className="text-sm text-gray-500">Selected:</span>
-
-              <span
-                className={`font-semibold ${
-                  selectedSeats.length === seatCount
-                    ? "text-green-600"
-                    : "text-[#1090DF]"
-                }`}
-              >
-                {selectedSeats.length}/{seatCount}
-              </span>
-            </div>
-          </div>
+          <h1
+            className="
+              text-4xl
+              font-bold
+              uppercase
+              tracking-tight
+              text-[#1090DF]
+              sm:text-5xl
+            "
+          >
+            Select Seat
+          </h1>
 
           {/* =================================================
-              SCREEN SELECTOR
+              PRICE DEBUG INFO
+              Only console, UI unchanged
           ================================================= */}
 
-          {screens.length > 1 && (
-            <div className="mb-7">
-              <p
-                className="
-                  mb-3
-                  text-sm
-                  font-medium
-                  text-gray-500
-                "
-              >
-                Screen
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                {screens.map((screen, index) => {
-                  const screenId = screen?.id || screen?._id || index;
-
-                  const isSelected = selectedScreen === screen;
-
-                  return (
-                    <button
-                      key={screenId}
-                      type="button"
-                      onClick={() => handleScreenChange(screen)}
-                      className={`
-                        rounded-md
-                        border
-                        px-5
-                        py-2.5
-                        text-sm
-                        transition
-
-                        ${
-                          isSelected
-                            ? `
-                              border-[#1090DF]
-                              bg-[#1090DF]
-                              text-white
-                            `
-                            : `
-                              border-gray-300
-                              bg-white
-                              text-gray-600
-                              hover:border-[#1090DF]
-                              hover:text-[#1090DF]
-                            `
-                        }
-                      `}
-                    >
-                      {screen?.name ||
-                        screen?.screenName ||
-                        `Screen ${index + 1}`}
-                    </button>
-                  );
-                })}
-              </div>
+          {showTimePrices.length === 0 && (
+            <div className="mt-4 text-center text-xs text-red-400">
+              Seat prices are not available for this show.
             </div>
           )}
 
           {/* =================================================
-              SEAT AREA
+              SEAT LAYOUT
+              NO BOX
           ================================================= */}
 
           <div
             className="
-              rounded-2xl
-              border
-              border-gray-200
-              bg-white/75
-              px-5
-              py-8
-              shadow-sm
-              md:px-10
+              mx-auto
+              mt-10
+              max-w-3xl
             "
           >
-            {/* SCREEN */}
-
-            <div className="mb-10">
-              <div
-                className="
-                  mx-auto
-                  h-2
-                  w-[70%]
-                  rounded-full
-                  bg-gray-300
-                "
-              />
-
-              <p
-                className="
-                  mt-2
-                  text-center
-                  text-xs
-                  uppercase
-                  tracking-[0.25em]
-                  text-gray-400
-                "
-              >
-                Screen
-              </p>
-            </div>
-
-            {/* =================================================
-                SECTIONS
-            ================================================= */}
-
             {layout.length === 0 ? (
-              <div className="flex min-h-[250px] items-center justify-center text-center">
+              <div className="py-20 text-center">
                 <p className="text-gray-500">No seat layout available.</p>
               </div>
             ) : (
               <div>
                 {layout.map((section, sectionIndex) => {
-                  console
-                  const sectionName = getSectionName(section);
-                  const sectionPrice = getSectionPrice(section);
+                  const sectionName = "Premium";
+
+                  // IMPORTANT:
+                  // Price directly from showTime.price[]
+                  const sectionPrice = getPriceFromShowTime(section);
+
                   const rows = getSectionRows(section);
 
                   return (
                     <div
                       key={`${sectionName}-${sectionIndex}`}
-                      className="mb-8"
+                      className="
+                          mb-10
+                          last:mb-0
+                        "
                     >
-                      {sectionIndex > 0 && (
-                        <div className="mb-6 border-t border-gray-200" />
-                      )}
+                      {/* =================================================
+                            SECTION NAME + PRICE
+                        ================================================= */}
 
-                      <p className="mb-4 text-xs text-gray-400">
-                        ₹{sectionPrice} {sectionName}
-                      </p>
+                      <div
+                        className="
+                            mb-5
+                            border-b
+                            border-gray-300
+                            pb-2
+                          "
+                      >
+                        <p
+                          className="
+                              text-sm
+                              font-normal
+                              text-gray-500
+                            "
+                        >
+                          ₹{sectionPrice} {sectionName}
+                        </p>
+                      </div>
 
-                      <div className="flex flex-col items-center gap-3">
+                      {/* =================================================
+                            ROWS
+                        ================================================= */}
+
+                      <div
+                        className="
+                            flex
+                            flex-col
+                            items-center
+                            gap-3
+                          "
+                      >
                         {rows.map((row) => {
                           const seats = getSeatsFromRow(row);
 
                           return (
                             <div
                               key={row.name}
-                              className="flex items-center gap-2"
+                              className="
+                                    flex
+                                    flex-wrap
+                                    justify-center
+                                    gap-2
+                                    sm:gap-3
+                                  "
                             >
                               {seats.map((seat) => {
                                 const isSelected = selectedSeats.some(
@@ -603,7 +593,11 @@ const Screen = () => {
                                     type="button"
                                     disabled={!seat.available}
                                     onClick={() =>
-                                      handleSeatClick({ seat, section, row })
+                                      handleSeatClick({
+                                        seat,
+                                        section,
+                                        row,
+                                      })
                                     }
                                     title={
                                       seat.available
@@ -611,16 +605,46 @@ const Screen = () => {
                                         : `${seat.label} - Unavailable`
                                     }
                                     className={`
-                          flex h-8 w-8 items-center justify-center rounded-md
-                          border text-[10px] font-medium transition-all duration-150
-                          ${
-                            !seat.available
-                              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-300"
-                              : isSelected
-                                ? "border-[#1090DF] bg-[#1090DF] text-white shadow-md"
-                                : "border-gray-300 bg-white text-gray-600 hover:border-[#1090DF] hover:bg-[#C2E8FF] hover:text-[#1090DF]"
-                          }
-                        `}
+                                            flex
+                                            h-9
+                                            w-9
+                                            items-center
+                                            justify-center
+                                            rounded-md
+                                            border
+                                            text-[10px]
+                                            font-medium
+                                            transition-all
+                                            duration-150
+                                            sm:h-10
+                                            sm:w-10
+                                            sm:text-xs
+
+                                            ${
+                                              !seat.available
+                                                ? `
+                                                  cursor-not-allowed
+                                                  border-gray-200
+                                                  bg-gray-100
+                                                  text-gray-300
+                                                `
+                                                : isSelected
+                                                  ? `
+                                                    border-[#1090DF]
+                                                    bg-[#1090DF]
+                                                    text-white
+                                                    shadow-md
+                                                  `
+                                                  : `
+                                                    border-gray-300
+                                                    bg-white/60
+                                                    text-gray-600
+                                                    hover:border-[#1090DF]
+                                                    hover:bg-[#C2E8FF]
+                                                    hover:text-[#1090DF]
+                                                  `
+                                            }
+                                          `}
                                   >
                                     {seat.label}
                                   </button>
@@ -637,20 +661,58 @@ const Screen = () => {
             )}
 
             {/* =================================================
+                SCREEN
+            ================================================= */}
+
+            <div
+              className="
+                mt-12
+                flex
+                flex-col
+                items-center
+              "
+            >
+              <div
+                className="
+                  h-2
+                  w-[75%]
+                  rounded-full
+                  bg-gray-400/70
+                "
+              />
+
+              <p
+                className="
+                  mt-2
+                  text-center
+                  text-[10px]
+                  uppercase
+                  tracking-[0.4em]
+                  text-gray-500
+                "
+              >
+                Screen
+              </p>
+            </div>
+
+            {/* =================================================
                 LEGEND
             ================================================= */}
 
             <div
               className="
-                mt-8
+                mt-10
                 flex
                 flex-wrap
+                items-center
                 justify-center
                 gap-6
                 text-xs
                 text-gray-500
               "
             >
+              {/* AVAILABLE */}
+
               <div className="flex items-center gap-2">
                 <span
                   className="
@@ -659,11 +721,14 @@ const Screen = () => {
                     rounded
                     border
                     border-gray-300
-                    bg-white
+                    bg-white/70
                   "
                 />
-                Available
+
+                <span>Available</span>
               </div>
+
+              {/* SELECTED */}
 
               <div className="flex items-center gap-2">
                 <span
@@ -674,8 +739,11 @@ const Screen = () => {
                     bg-[#1090DF]
                   "
                 />
-                Selected
+
+                <span>Selected</span>
               </div>
+
+              {/* UNAVAILABLE */}
 
               <div className="flex items-center gap-2">
                 <span
@@ -688,146 +756,80 @@ const Screen = () => {
                     ring-gray-200
                   "
                 />
-                Unavailable
+
+                <span>Unavailable</span>
               </div>
-            </div>
-          </div>
-
-          {/* =================================================
-              BOTTOM BOOKING BAR
-          ================================================= */}
-
-          <div
-            className={`
-              mt-6
-              flex
-              flex-col
-              gap-4
-              rounded-xl
-              border
-              bg-white/90
-              p-5
-              shadow-sm
-              sm:flex-row
-              sm:items-center
-              sm:justify-between
-
-              ${canPay ? "border-[#1090DF]" : "border-gray-200"}
-            `}
-          >
-            {/* SELECTED SEATS */}
-
-            <div>
-              <p
-                className="
-                  text-xs
-                  text-gray-500
-                "
-              >
-                Selected seats
-              </p>
-
-              <p
-                className="
-                  mt-1
-                  text-lg
-                  font-semibold
-                  text-gray-800
-                "
-              >
-                {selectedSeats.length > 0
-                  ? selectedSeats.map((seat) => seat.label).join(", ")
-                  : "No seats selected"}
-              </p>
-
-              {/* STATUS */}
-
-              <p
-                className={`
-                  mt-1
-                  text-xs
-                  font-medium
-
-                  ${canPay ? "text-green-600" : "text-gray-500"}
-                `}
-              >
-                {canPay
-                  ? "All required seats selected ✓"
-                  : `Select ${seatCount - selectedSeats.length} more seat${
-                      seatCount - selectedSeats.length === 1 ? "" : "s"
-                    }`}
-              </p>
-            </div>
-
-            {/* PRICE + PAY */}
-
-            <div
-              className="
-                flex
-                items-center
-                gap-4
-              "
-            >
-              <div className="text-right">
-                <p
-                  className="
-                    text-xs
-                    text-gray-500
-                  "
-                >
-                  Total
-                </p>
-
-                <p
-                  className="
-                    text-xl
-                    font-bold
-                    text-[#1090DF]
-                  "
-                >
-                  ₹{totalPrice}
-                </p>
-              </div>
-
-              {/* PAY BUTTON */}
-
-              <button
-                type="button"
-                disabled={!canPay}
-                onClick={handlePay}
-                className={`
-                  rounded-md
-                  border
-                  px-7
-                  py-3
-                  text-sm
-                  font-semibold
-                  transition-all
-                  duration-200
-
-                  ${
-                    canPay
-                      ? `
-                        border-[#1090DF]
-                        bg-[#1090DF]
-                        text-white
-                        hover:bg-[#0879bd]
-                      `
-                      : `
-                        cursor-not-allowed
-                        border-gray-200
-                        bg-gray-100
-                        text-gray-400
-                      `
-                  }
-                `}
-              >
-                Pay ₹{totalPrice}
-              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* =====================================================
+          FIXED PAY BAR
+      ===================================================== */}
+
+      <div
+        className="
+          fixed
+          bottom-0
+          left-0
+          right-0
+          z-50
+          border-t
+          border-gray-300
+          bg-white/90
+          px-5
+          py-5
+          backdrop-blur-md
+        "
+      >
+        <div
+          className="
+            mx-auto
+            flex
+            max-w-5xl
+            items-center
+            justify-center
+          "
+        >
+          <button
+            type="button"
+            disabled={!canPay}
+            onClick={handlePay}
+            className={`
+              w-full
+              max-w-[250px]
+              rounded-md
+              border
+              px-7
+              py-3
+              text-sm
+              font-semibold
+              transition-all
+              duration-200
+
+              ${
+                canPay
+                  ? `
+                    border-[#1090DF]
+                    bg-white
+                    text-[#1090DF]
+                    hover:bg-[#1090DF]
+                    hover:text-white
+                  `
+                  : `
+                    cursor-not-allowed
+                    border-[#1090DF]
+                    bg-white
+                    text-[#1090DF]
+                  `
+              }
+            `}
+          >
+            Pay ₹{totalPrice}
+          </button>
+        </div>
+      </div>
     </main>
   );
 };

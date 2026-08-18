@@ -59,7 +59,6 @@ export const getTheaterMovies = async (theaterId) => {
 
   const data = await response.json();
   const movies = data.data.movies;
-  console.log("Theater Movies Data:", movies); // Debugging line
 
   return movies;
 };
@@ -79,7 +78,6 @@ export const getTheaterShows = async (theaterId, date) => {
   }
 
   const data = await response.json();
-  console.log("Theater Shows Data:", data); // Debugging line
 
   return Array.isArray(data?.data) ? data.data : [];
 };
