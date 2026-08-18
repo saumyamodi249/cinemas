@@ -22,9 +22,10 @@ const MovieDetails = () => {
   const [selectedTime, setSelectedTime] = useState(null);
 
   const [seatModalOpen, setSeatModalOpen] = useState(false);
+
   const [theaterId, setTheaterId] = useState("");
 
-  const [timelist, setTimelist] = useState();
+  const [timelist, setTimelist] = useState([]);
 
   // =====================================================
   // GET MOVIE DETAILS
@@ -38,25 +39,25 @@ const MovieDetails = () => {
 
         const response = await getMovieDetails(id);
 
+        console.log("MOVIE DETAILS RESPONSE:", response);
+
         let movieData = null;
 
         if (response?.data && Array.isArray(response.data)) {
           movieData =
-            response.data.find((item) => String(item?.id) === String(id)) ||
-            response.data[0];
-        } else if (response?.data && !Array.isArray(response.data)) {
+            response.data.find(
+              (item) => String(item?.id) === String(id),
+            ) || response.data[0];
+        } else if (
+          response?.data &&
+          !Array.isArray(response.data)
+        ) {
           movieData = response.data;
         } else {
           movieData = response;
         }
 
-        // const [theaterData, showData] = await Promise.all([
-        //   getTheaterDetails(id),
-        //   getTheaterShows(id, selectedDate),
-        // ]);
-
-        // console.log("THEATER DATA:", theaterData);
-        // console.log("SHOW DATA:", showData);
+        console.log("FINAL MOVIE:", movieData);
 
         setMovie(movieData);
 
@@ -66,7 +67,9 @@ const MovieDetails = () => {
       } catch (err) {
         console.error("MOVIE DETAILS ERROR:", err);
 
-        setError(err.message || "Failed to load movie details");
+        setError(
+          err?.message || "Failed to load movie details",
+        );
       } finally {
         setLoading(false);
       }
@@ -105,34 +108,42 @@ const MovieDetails = () => {
 
   const formatApiDate = (date) => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
-
     const day = String(date.getDate()).padStart(2, "0");
-
     const year = date.getFullYear();
 
     return `${month}-${day}-${year}`;
   };
 
   // =====================================================
-  // FETCH SHOW TIMES FROM THEATER SHOW API
+  // FETCH SHOW TIMES
   // =====================================================
 
   useEffect(() => {
     const fetchShowTimes = async () => {
       if (!selectedTheater?.id || !movie?.id) {
+        console.log("MISSING:", {
+          theaterId: selectedTheater?.id,
+          movieId: movie?.id,
+        });
+
         setShowTimes([]);
+        setTimelist([]);
         setSelectedTime(null);
+
         return;
       }
 
       try {
-        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+        const date = formatApiDate(selectedDate);
 
-        const day = String(selectedDate.getDate()).padStart(2, "0");
+        console.log("=================================");
+        console.log(
+          "THEATER ID:",
+          selectedTheater.id,
+        );
 
-        const year = selectedDate.getFullYear();
-
-        const date = `${month}-${day}-${year}`;
+        console.log("MOVIE ID:", movie.id);
+        console.log("DATE:", date);
 
         setTheaterId(selectedTheater.id);
 
@@ -141,11 +152,14 @@ const MovieDetails = () => {
           String(date),
         );
 
-        setTimelist(response[0].showTimes);
+        console.log(
+          "THEATER SHOW API RESPONSE:",
+          response,
+        );
 
-        // -----------------------------------------
+        // =================================================
         // RESPONSE ARRAY
-        // -----------------------------------------
+        // =================================================
 
         const moviesList = Array.isArray(response)
           ? response
@@ -153,41 +167,72 @@ const MovieDetails = () => {
             ? response.data
             : [];
 
-        // -----------------------------------------
+        console.log("MOVIES LIST:", moviesList);
+
+        // =================================================
         // FIND CURRENT MOVIE
-        // -----------------------------------------
+        // =================================================
 
         const currentMovie = moviesList.find((item) => {
-          const apiMovieId = item?.id || item?.movieId || item?.movie?.id;
+          const apiMovieId =
+            item?.id ||
+            item?.movieId ||
+            item?.movie?.id;
 
-          return String(apiMovieId) === String(movie.id);
+          return (
+            String(apiMovieId) === String(movie.id)
+          );
         });
 
-        // -----------------------------------------
-        // SHOW TIMES
-        // -----------------------------------------
+        console.log("CURRENT MOVIE:", currentMovie);
 
-        const apiShowTimes = Array.isArray(currentMovie?.showTimes)
+        // =================================================
+        // SHOW TIMES
+        // =================================================
+
+        const apiShowTimes = Array.isArray(
+          currentMovie?.showTimes,
+        )
           ? currentMovie.showTimes
           : [];
 
+        console.log(
+          "SHOW TIMES:",
+          apiShowTimes,
+        );
+
         setShowTimes(apiShowTimes);
+
+        // IMPORTANT
+        // Time list also comes from current movie
+        setTimelist(apiShowTimes);
+
+        // =================================================
+        // DEFAULT TIME
+        // =================================================
 
         if (apiShowTimes.length > 0) {
           setSelectedTime(apiShowTimes[0]);
         } else {
           setSelectedTime(null);
         }
+
+        console.log("=================================");
       } catch (err) {
-        console.error("SHOW TIME FETCH ERROR:", err);
+        console.error(
+          "SHOW TIME FETCH ERROR:",
+          err,
+        );
 
         setShowTimes([]);
+        setTimelist([]);
         setSelectedTime(null);
       }
     };
 
     fetchShowTimes();
   }, [selectedTheater, selectedDate, movie]);
+
   // =====================================================
   // FORMAT SHOW TIME
   // =====================================================
@@ -225,13 +270,13 @@ const MovieDetails = () => {
       weekday: "short",
     });
 
-  const formatFullDate = (date) => {
-    return date.toLocaleDateString("en-GB", {
+  const formatFullDate = (date) =>
+    date.toLocaleDateString("en-GB", {
       day: "numeric",
       month: "long",
       year: "numeric",
     });
-  };
+
   // =====================================================
   // BOOK NOW
   // =====================================================
@@ -252,6 +297,8 @@ const MovieDetails = () => {
       return;
     }
 
+    // IMPORTANT
+    // Book Now opens SeatSelection
     setSeatModalOpen(true);
   };
 
@@ -262,10 +309,27 @@ const MovieDetails = () => {
   const handleConfirmSeats = (numberOfSeats) => {
     setSeatModalOpen(false);
 
+    console.log(
+      "CONFIRMED SEAT COUNT:",
+      numberOfSeats,
+    );
+
+    console.log(
+      "SELECTED TIME:",
+      selectedTime,
+    );
+
+    // =================================================
+    // AFTER SEAT SELECTION
+    // OPEN SCREEN PAGE
+    // =================================================
+
     navigate(`/screen/${selectedTheater.id}`, {
       state: {
         movie,
+
         date: selectedDate,
+
         theater: selectedTheater,
 
         time: selectedTime?.startTime,
@@ -275,6 +339,9 @@ const MovieDetails = () => {
         showTimeId: selectedTime?.id || null,
 
         showTime: selectedTime || null,
+
+        // Keep theater id also available
+        theaterId: selectedTheater?.id || null,
       },
     });
   };
@@ -314,7 +381,9 @@ const MovieDetails = () => {
         <Navbar />
 
         <div className="flex min-h-[70vh] items-center justify-center">
-          <p className="text-gray-500">Loading movie details...</p>
+          <p className="text-gray-500">
+            Loading movie details...
+          </p>
         </div>
       </main>
     );
@@ -335,9 +404,12 @@ const MovieDetails = () => {
         <Navbar />
 
         <div className="flex min-h-[70vh] flex-col items-center justify-center">
-          <p className="mb-4 text-red-500">{error}</p>
+          <p className="mb-4 text-red-500">
+            {error}
+          </p>
 
           <button
+            type="button"
             onClick={() => navigate("/home")}
             className="rounded-lg bg-[#1090DF] px-6 py-3 text-white"
           >
@@ -363,9 +435,11 @@ const MovieDetails = () => {
 
       <section className="px-6 pb-12 pt-5">
         <div className="mx-auto max-w-7xl">
+
           {/* BACK */}
 
           <button
+            type="button"
             onClick={() => navigate("/home")}
             className="mb-5 text-sm text-gray-400 hover:text-[#1090DF]"
           >
@@ -373,23 +447,31 @@ const MovieDetails = () => {
           </button>
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+
             {/* =====================================================
                 LEFT SIDE
             ===================================================== */}
 
             <div className="mt-3">
-              {/* DATE */}
 
-              <h2 className="mb-5 text-2xl font-bold text-[#1090DF]">Date</h2>
+              {/* =================================================
+                  DATE
+              ================================================= */}
+
+              <h2 className="mb-5 text-2xl font-bold text-[#1090DF]">
+                Date
+              </h2>
 
               <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2">
                 {dates.map((date, index) => {
                   const selected =
-                    selectedDate.toDateString() === date.toDateString();
+                    selectedDate.toDateString() ===
+                    date.toDateString();
 
                   return (
                     <button
                       key={index}
+                      type="button"
                       onClick={() => {
                         setSelectedDate(date);
                         setSelectedTime(null);
@@ -400,15 +482,21 @@ const MovieDetails = () => {
                           : "border-gray-300 bg-white text-gray-700"
                       }`}
                     >
-                      <span>{formatDate(date)}</span>
+                      <span>
+                        {formatDate(date)}
+                      </span>
 
-                      <span className="mt-1 font-bold">{formatDay(date)}</span>
+                      <span className="mt-1 font-bold">
+                        {formatDay(date)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* THEATER */}
+              {/* =================================================
+                  THEATER
+              ================================================= */}
 
               <h2 className="mb-5 mt-8 text-2xl font-bold text-[#1090DF]">
                 Theater
@@ -417,12 +505,17 @@ const MovieDetails = () => {
               <div className="flex flex-wrap gap-3">
                 {movie?.theaters?.length > 0 ? (
                   movie.theaters.map((theater) => {
-                    const selected = selectedTheater?.id === theater.id;
+                    const selected =
+                      selectedTheater?.id === theater.id;
 
                     return (
                       <button
                         key={theater.id}
-                        onClick={() => setSelectedTheater(theater)}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTheater(theater);
+                          setSelectedTime(null);
+                        }}
                         className={`rounded-lg border px-5 py-3 text-sm ${
                           selected
                             ? "border-[#1090DF] bg-[#1090DF] text-white"
@@ -440,84 +533,80 @@ const MovieDetails = () => {
                 )}
               </div>
 
-              {/* TIME */}
+              {/* =================================================
+                  TIME
+              ================================================= */}
 
               <h2 className="mb-5 mt-8 text-2xl font-bold text-[#1090DF]">
                 Time
               </h2>
 
-              {/* <div className="flex flex-wrap gap-3">
-                {showTimes.length > 0 ? (
-                  showTimes.map((show) => {
-                    const selected = selectedTime?.id === show.id;
+              {timelist?.length > 0 ? (
+                <div className="flex flex-wrap gap-3">
+                  {timelist.map((item) => {
+                    const formattedTime =
+                      formatShowTime(
+                        item?.startTime,
+                      );
+
+                    const isSelected =
+                      selectedTime?.id === item?.id;
 
                     return (
                       <button
-                        key={show.id}
-                        type="button"
-                        onClick={() => setSelectedTime(show)}
-                        className={`rounded-lg border px-6 py-3 text-sm ${
-                          selected
-                            ? "border-[#1090DF] bg-[#1090DF] text-white"
-                            : "border-gray-300 bg-white text-gray-700"
-                        }`}
-                      >
-                        {formatShowTime(show.startTime)}
-                      </button>
-                    );
-                  })
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    No show times available.
-                  </p>
-                )}
-              </div> */}
-
-              {theaterId &&
-                (() => {
-                  const timeButtons = [];
-
-                  (timelist || []).forEach((item) => {
-                    const time = item.startTime;
-
-                    const formattedTime = new Date(time).toLocaleTimeString(
-                      "en-IN",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      },
-                    );
-
-                    timeButtons.push(
-                      <button
                         key={item.id}
                         type="button"
-                        value={time}
                         onClick={() => {
+                          // ==================================
+                          // IMPORTANT:
+                          // ONLY SELECT TIME
+                          // DATE WILL NOT CHANGE
+                          // ==================================
+
                           setSelectedTime(item);
                         }}
                         className={`
-            flex h-9 min-w-[44px] flex-col items-center justify-center
-            rounded-sm border px-2 text-[9px]
-            ${
-              selectedTime?.startTime === time
-                ? "border-[#1090DF] bg-[#e6f5ff]"
-                : "border-gray-300 bg-white/50"
-            }
-          `}
-                      >
-                        <span>{formattedTime}</span>
-                      </button>,
-                    );
-                  });
+                          flex
+                          h-10
+                          min-w-[75px]
+                          items-center
+                          justify-center
+                          rounded-lg
+                          border
+                          px-3
+                          text-sm
+                          transition-all
+                          duration-200
 
-                  return (
-                    <div className="mb-2 flex items-center gap-2">
-                      {timeButtons}
-                    </div>
-                  );
-                })()}
+                          ${
+                            isSelected
+                              ? `
+                                border-[#1090DF]
+                                bg-[#1090DF]
+                                text-white
+                                shadow-md
+                              `
+                              : `
+                                border-gray-300
+                                bg-white
+                                text-gray-700
+                                hover:border-[#1090DF]
+                                hover:bg-[#C2E8FF]
+                                hover:text-[#1090DF]
+                              `
+                          }
+                        `}
+                      >
+                        {formattedTime}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No show times available.
+                </p>
+              )}
             </div>
 
             {/* =====================================================
@@ -525,6 +614,7 @@ const MovieDetails = () => {
             ===================================================== */}
 
             <div className="w-full">
+
               <div className="mb-5 flex justify-end">
                 <img
                   src={movie?.image}
@@ -535,15 +625,23 @@ const MovieDetails = () => {
 
               <div className="flex justify-end">
                 <div className="w-[320px] max-w-full">
+
+                  {/* MOVIE NAME */}
+
                   <h1 className="w-full break-words text-2xl font-bold uppercase leading-tight text-[#1090DF]">
                     {movie?.name}
                   </h1>
+
+                  {/* DESCRIPTION */}
 
                   <p className="mt-3 w-full break-words text-sm leading-6 text-gray-600">
                     {movie?.description}
                   </p>
 
+                  {/* MOVIE INFO */}
+
                   <div className="mt-4 w-full space-y-2 text-sm">
+
                     <div className="flex">
                       <span className="w-[80px] shrink-0 text-gray-500">
                         Duration
@@ -569,38 +667,50 @@ const MovieDetails = () => {
                         Type
                       </span>
 
-                      <span className="font-medium text-gray-800">2D</span>
+                      <span className="font-medium text-gray-800">
+                        2D
+                      </span>
                     </div>
+
                   </div>
 
-                  {/* BOOKING BOX */}
+                  {/* =================================================
+                      BOOKING BOX
+                  ================================================= */}
 
                   <div className="mt-6 min-h-[250px] w-full rounded-xl border border-[#1090DF] bg-white/80 p-10">
+
+                    {/* THEATER */}
+
                     {selectedTheater && (
                       <h2 className="overflow-hidden text-2xl font-bold text-[#1090DF]">
                         {selectedTheater.name}
                       </h2>
                     )}
 
+                    {/* DATE */}
+
                     <p className="mt-4 text-base text-gray-600">
-                      {formatFullDate(selectedDate)}
+                      {formatFullDate(
+                        selectedDate,
+                      )}
                     </p>
+
+                    {/* TIME */}
 
                     <p className="mt-1 text-base text-gray-600">
                       {selectedTime
-                        ? new Date(selectedTime.startTime).toLocaleTimeString(
-                            "en-US",
-                            {
-                              hour: "numeric",
-                              minute: "2-digit",
-                              hour12: true,
-                            },
+                        ? formatShowTime(
+                            selectedTime.startTime,
                           )
                         : "No time selected"}
                     </p>
+
                     <p className="mt-4 text-xs text-gray-500">
                       *Select your seat before booking
                     </p>
+
+                    {/* BOOK NOW */}
 
                     <button
                       type="button"
@@ -614,6 +724,7 @@ const MovieDetails = () => {
                     >
                       Book Now
                     </button>
+
                   </div>
                 </div>
               </div>
@@ -622,13 +733,16 @@ const MovieDetails = () => {
         </div>
       </section>
 
-      {/* SEAT MODAL */}
+      {/* =====================================================
+          SEAT SELECTION MODAL
+      ===================================================== */}
 
       <SeatSelection
         isOpen={seatModalOpen}
         onClose={() => setSeatModalOpen(false)}
         onConfirm={handleConfirmSeats}
       />
+
     </main>
   );
 };
