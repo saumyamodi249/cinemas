@@ -35,28 +35,6 @@ export const getTheaterScreens = async (screenId) => {
   return data;
 };
 
-// export const getDataForPrice = async (screenId) => {
-//   const response = await fetch(`${API_BASE_URL}/screens/${screenId}`, {
-//     method: "GET",
-//     headers: getHeaders(),
-//   });
-
-//   if (!response.ok) {
-//     throw new Error(`Failed to fetch screen: ${response.status}`);
-//   }
-
-//   const data = await response.json();
-
-//   console.log("SCREEN BY ID DATA:", data);
-
-//   return data;
-// };
-/*
-=====================================================
-NORMALIZE SCREENS
-=====================================================
-*/
-
 export const normalizeScreens = (response) => {
   const screen = response?.data?.screen || response?.screen || response;
 

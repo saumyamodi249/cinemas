@@ -73,12 +73,7 @@ export const getMovieShowTimes = async (
   }
 
   const result = await response.json();
-
-  console.log(
-    "THEATER SHOWS API RESPONSE:",
-    result
-  );
-
+  
   if (Array.isArray(result)) {
     return result;
   }

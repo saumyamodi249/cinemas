@@ -60,10 +60,7 @@ const MovieDetails = () => {
         if (movieData?.theaters?.length > 0) {
           setSelectedTheater(movieData.theaters[0]);
         }
-        console.log(
-          "🔥🔥 MOVIE THEATERS FULL:",
-          JSON.stringify(movieData?.theaters, null, 2),
-        );
+       
       } catch (err) {
         setError(err?.message || "Failed to load movie details");
       } finally {
@@ -129,15 +126,7 @@ const MovieDetails = () => {
           String(selectedTheater.id),
           date,
         );
-        console.log("🔥🔥🔥 FULL THEATER SHOW RESPONSE:", response);
-        console.log(
-          "🔥🔥🔥 SELECTED MOVIE SHOWTIMES:",
-          response?.find(
-            (item) =>
-              String(item?.id || item?.movieId || item?.movie?.id) ===
-              String(movie.id),
-          )?.showTimes,
-        );
+    
         const moviesList = Array.isArray(response)
           ? response
           : Array.isArray(response?.data)
@@ -247,7 +236,6 @@ const MovieDetails = () => {
       // 2. Get showtimes for this movie on selected date
       const byDateData = await getShowTimesByDate(movie.id, date);
 
-      console.log("🔥 MOVIE BY DATE RESPONSE:", byDateData);
 
       // 3. Get theaters list
       const theatersList = Array.isArray(byDateData)
@@ -265,7 +253,6 @@ const MovieDetails = () => {
         throw new Error("Could not find selected theater for this date.");
       }
 
-      console.log("🔥 MATCHED THEATER:", matchedTheater);
 
       // 5. Find selected showtime
       const matchedShowtime = (matchedTheater.showtimes || []).find(
@@ -277,7 +264,6 @@ const MovieDetails = () => {
         throw new Error("Could not find selected showtime.");
       }
 
-      console.log("🔥 MATCHED SHOWTIME:", matchedShowtime);
 
       // 6. Get screen ID
       const screenId = matchedShowtime.screenId;
@@ -286,12 +272,10 @@ const MovieDetails = () => {
         throw new Error("No screen assigned to this showtime.");
       }
 
-      console.log("🔥 SCREEN ID:", screenId);
 
       // 7. Get complete screen data
       const screenData = await getScreenById(screenId);
 
-      console.log("🔥 SCREEN DATA:", screenData);
 
       // 8. Save screen data
       setSelectedScreen(screenData?.data || screenData);
@@ -299,7 +283,6 @@ const MovieDetails = () => {
       // 9. Open seat selection
       setSeatModalOpen(true);
     } catch (err) {
-      console.error("🔥 MOVIE BOOKING ERROR:", err);
       alert(err.message || "Failed to start booking.");
     }
   };
@@ -320,15 +303,11 @@ const MovieDetails = () => {
       null;
 
     if (!screenId) {
-      console.error("🔥 SCREEN ID NOT FOUND");
-      console.log("Selected Screen:", selectedScreen);
+    
       return;
     }
 
-    console.log("🔥 NAVIGATING WITH SCREEN:", {
-      screenId,
-      screen: selectedScreen,
-    });
+    
 
     navigate(`/screen/${selectedTheater.id}`, {
       state: {

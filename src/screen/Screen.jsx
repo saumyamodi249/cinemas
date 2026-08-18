@@ -24,17 +24,9 @@ const Screen = () => {
   const theater = bookingState.theater || null;
   const date = bookingState.date || null;
   const time = bookingState.time || null;
-  console.log(bookingState.screenId, "screen id");
-  console.log(bookingState.showTimeId);
+  
 
-  // const priceData = getTheaterScreens(bookingState.screenId)
-  //   .then((priceData) => {
-  //     console.log("price", priceData.data);
-  //   })
-  //   .catch((error) => {
-  //     console.error(error);
-  //   });
-  // console.log("price", priceData);
+
 
   useEffect(() => {
     const getPrice = async () => {
@@ -129,7 +121,6 @@ const Screen = () => {
         setError("");
 
         const screenData = bookingState.screen;
-        console.log("scr data", screenData);
 
         if (!screenData) {
           throw new Error("Screen information is missing.");
@@ -233,12 +224,10 @@ const Screen = () => {
     const sectionName = "Premium";
 
     if (!currentShowTime) {
-      console.warn("No showTime found");
       return 0;
     }
 
     if (!Array.isArray(currentShowTime.price)) {
-      console.warn("No price array in showTime:", currentShowTime);
       return 0;
     }
 
