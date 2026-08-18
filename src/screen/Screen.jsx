@@ -314,14 +314,30 @@ const Screen = () => {
   // PAY
   // =====================================================
 
-  const handlePay = () => {
-    if (selectedSeats.length !== seatCount) {
-      return;
-    }
-  };
+const handlePay = () => {
+  if (selectedSeats.length !== seatCount) {
+    return;
+  }
 
-  // =====================================================
-  // LOADING
+  navigate("/booking-detail", {
+    state: {
+      movie,
+      theater,
+      date,
+      time,
+
+      theaterId,
+      showTimeId,
+
+      seatCount,
+      selectedSeats,
+
+      totalPrice,
+
+      screen: selectedScreen,
+    },
+  });
+};
   // =====================================================
 
   if (loading) {
