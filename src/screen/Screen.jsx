@@ -59,10 +59,14 @@ const Screen = () => {
     "";
 
   const showTimeId =
-    bookingState.showTimeId ||
-    bookingState.showId ||
-    bookingState.show?.id ||
-    null;
+  bookingState.showtimeId ||
+  bookingState.showTimeId ||
+  bookingState.showId ||
+  bookingState.show?.showtimeId ||
+  bookingState.show?.id ||
+  bookingState.showTime?.id ||
+  bookingState.selectedShowTime?.id ||
+  null;
 
   // ShowTime agar previous page se aa raha hai
   const passedShowTime =
@@ -280,13 +284,22 @@ const [selectedSeats, setSelectedSeats] = useState(
     const sectionPrice = getPriceFromShowTime(section);
     const sectionName = getSectionName(section);
 
-    const selectedSeatData = {
-      ...seat,
-      section: sectionName,
-      sectionPrice,
-      price: sectionPrice,
-      row: row?.name || row?.row || row?.rowName || "",
-    };
+   const selectedSeatData = {
+  ...seat,
+
+  row: seat?.row || row?.name || "",
+
+  column: Number(seat?.column),
+
+  layoutType:
+    seat?.layoutType ||
+    section?.type ||
+    sectionName,
+
+  section: sectionName,
+  sectionPrice,
+  price: sectionPrice,
+};
 
     setSelectedSeats((previousSeats) => {
       // ============================================
@@ -328,25 +341,52 @@ const handlePay = () => {
     return;
   }
 
- navigate("/booking-detail", {
-  state: {
-    movie,
-    theater,
-    date,
-    time,
+  if (!showTimeId) {
+    console.error("SHOWTIME ID MISSING");
+    console.log("BOOKING STATE:", bookingState);
+    console.log("PASSED SHOW TIME:", passedShowTime);
 
-    theaterId,
-    showTimeId,
-    screenId: screenId,
+    return;
+  }
 
-    seatCount,
-    selectedSeats,
+  console.log("=================================");
+  console.log("BOOKING DATA");
+  console.log("=================================");
+  console.log("SHOWTIME ID:", showTimeId);
 
-    totalPrice,
+  console.log(
+    "SELECTED SEATS:",
+    selectedSeats.map((seat) => ({
+      row: seat.row,
+      column: seat.column,
+      layoutType: seat.layoutType,
+    }))
+  );
 
-    screen: selectedScreen,
-  },
-});
+  navigate("/booking-detail", {
+    state: {
+      movie,
+      theater,
+      date,
+      time,
+
+      theaterId,
+
+      showtimeId: showTimeId,
+      showTimeId: showTimeId,
+
+      screenId,
+
+      seatCount,
+      selectedSeats,
+
+      totalPrice,
+
+      screen: selectedScreen,
+
+      showTime: passedShowTime,
+    },
+  });
 };
   // =====================================================
 
