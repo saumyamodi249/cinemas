@@ -11,6 +11,12 @@
 
     const bookingState = location.state || {};
 
+    const screenId =
+  bookingState.screenId ||
+  bookingState.screen?.screen?.id ||
+  bookingState.screen?.id ||
+  "";
+
     const movie = bookingState.movie || null;
     const theater = bookingState.theater || null;
 
@@ -554,28 +560,38 @@
                 </button>
 
                 {/* CANCEL */}
+               <button
+  type="button"
+  onClick={() => {
+    console.log("CANCEL SCREEN ID:", screenId);
+    console.log("CANCEL STATE:", bookingState);
 
-                <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="
-                    h-[41px]
-                    w-full
-                    rounded-[5px]
-                    border
-                    border-gray-300
-                    bg-white/60
-                    text-[13px]
-                    font-medium
-                    text-gray-400
-                    transition
-                    duration-200
-                    hover:border-[#1090DF]
-                    hover:text-[#1090DF]
-                "
-                >
-                Cancel
-                </button>
+    navigate(`/screen/${screenId}`, {
+      state: {
+        ...bookingState,
+        screenId,
+        selectedSeats,
+      },
+    });
+  }}
+  className="
+    h-[41px]
+    w-full
+    rounded-[5px]
+    border
+    border-gray-300
+    bg-white/60
+    text-[13px]
+    font-medium
+    text-gray-400
+    transition
+    duration-200
+    hover:border-[#1090DF]
+    hover:text-[#1090DF]
+  "
+>
+  Cancel
+</button>
             </div>
             </div>
         </div>

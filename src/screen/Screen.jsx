@@ -20,6 +20,12 @@ const Screen = () => {
 
   const bookingState = location.state || {};
 
+  const screenId =
+  bookingState.screenId ||
+  bookingState.screen?.screen?.id ||
+  bookingState.screen?.id ||
+  "";
+
   const movie = bookingState.movie || null;
   const theater = bookingState.theater || null;
   const date = bookingState.date || null;
@@ -28,16 +34,16 @@ const Screen = () => {
   useEffect(() => {
     const getPrice = async () => {
       try {
-        const priceData = await getTheaterScreens(bookingState.screenId);
+        const priceData = await getTheaterScreens(screenId);
       } catch (error) {
         console.error("Price fetch error:", error);
       }
     };
 
-    if (bookingState.screenId) {
+    if (screenId) {
       getPrice();
     }
-  }, [bookingState.screenId]);
+  }, [screenId]);
 
   const seatCount = Number(bookingState.seatCount) || 1;
 
@@ -69,8 +75,11 @@ const Screen = () => {
   // SELECTED SEATS
   // =====================================================
 
-  const [selectedSeats, setSelectedSeats] = useState([]);
-
+const [selectedSeats, setSelectedSeats] = useState(
+  Array.isArray(bookingState.selectedSeats)
+    ? bookingState.selectedSeats
+    : []
+);
   // =====================================================
   // SCREEN DATA
   // =====================================================
@@ -319,24 +328,25 @@ const handlePay = () => {
     return;
   }
 
-  navigate("/booking-detail", {
-    state: {
-      movie,
-      theater,
-      date,
-      time,
+ navigate("/booking-detail", {
+  state: {
+    movie,
+    theater,
+    date,
+    time,
 
-      theaterId,
-      showTimeId,
+    theaterId,
+    showTimeId,
+    screenId: screenId,
 
-      seatCount,
-      selectedSeats,
+    seatCount,
+    selectedSeats,
 
-      totalPrice,
+    totalPrice,
 
-      screen: selectedScreen,
-    },
-  });
+    screen: selectedScreen,
+  },
+});
 };
   // =====================================================
 
