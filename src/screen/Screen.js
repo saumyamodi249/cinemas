@@ -66,18 +66,55 @@ const expandColumnRange = (start, end) => {
 
   return columns;
 };
-const getBookedSeatKeys = (showTime) => {
+const getBookedSeatKeys = (showTime, selectedScreen) => {
   const keys = new Set();
 
+  // ============================================
+  // BOOKED SEATS FROM SHOWTIME ORDERS
+  // ============================================
   (showTime?.orders || []).forEach((order) => {
     (order?.seatData?.seats || []).forEach((seat) => {
-      keys.add(`${seat.row}-${seat.column}`);
+      const row =
+        seat?.row ||
+        seat?.rowName ||
+        seat?.row_name;
+
+      const column =
+        seat?.column ??
+        seat?.number ??
+        seat?.seatNumber ??
+        seat?.seatNo ??
+        seat?.seat_number;
+
+      if (row != null && column != null) {
+        keys.add(`${String(row).trim().toUpperCase()}-${Number(column)}`);
+      }
     });
+  });
+
+  // ============================================
+  // BOOKED SEATS FROM selectedScreen.bookedSeats
+  // ============================================
+  (selectedScreen?.bookedSeats || []).forEach((seat) => {
+    const row =
+      seat?.row ||
+      seat?.rowName ||
+      seat?.row_name;
+
+    const column =
+      seat?.column ??
+      seat?.number ??
+      seat?.seatNumber ??
+      seat?.seatNo ??
+      seat?.seat_number;
+
+    if (row != null && column != null) {
+      keys.add(`${String(row).trim().toUpperCase()}-${Number(column)}`);
+    }
   });
 
   return keys;
 };
-
 // Price for a layoutType, read from that showtime's price list
 const getPriceForType = (showTime, layoutType) => {
   const match = (showTime?.price || []).find(
@@ -126,7 +163,7 @@ export const getScreenLayout = (selectedScreen, showTimeId) => {
     (st) => String(st.id) === String(showTimeId),
   );
 
-  const bookedKeys = getBookedSeatKeys(showTime);
+const bookedKeys = getBookedSeatKeys(showTime, selectedScreen);
 
   return rawSections.map((section) => {
     const type = section?.type || "";
@@ -145,7 +182,7 @@ export const getScreenLayout = (selectedScreen, showTimeId) => {
 
     const rows = rowLabels.map((rowLabel) => {
       const seats = columnNumbers.map((columnNumber) => {
-        const key = `${rowLabel}-${columnNumber}`;
+        const key = `${String(rowLabel).trim().toUpperCase()}-${Number(columnNumber)}`;
 
         return {
           id: key,

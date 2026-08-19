@@ -681,12 +681,13 @@ const handlePay = () => {
 
                                             ${
                                               !seat.available
-                                                ? `
-                                                  cursor-not-allowed
-                                                  border-gray-200
-                                                  bg-gray-100
-                                                  text-gray-300
-                                                `
+  ? `
+      cursor-not-allowed
+      border-red-500
+      bg-red-500
+      text-white
+    `
+                                                
                                                 : isSelected
                                                   ? `
                                                     border-[#1090DF]
@@ -810,9 +811,9 @@ const handlePay = () => {
                     h-4
                     w-4
                     rounded
-                    bg-gray-100
-                    ring-1
-                    ring-gray-200
+                    bg-red-500
+    ring-1
+    ring-red-500
                   "
                 />
 

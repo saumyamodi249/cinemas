@@ -25,19 +25,18 @@ const BookingDetail = () => {
   const time = bookingState.time || null;
 
   // =====================================================
-// SHOWTIME ID
-// =====================================================
+  // SHOWTIME ID
+  // =====================================================
 
-const showtimeId =
-  bookingState.showtimeId ||
-  bookingState.showTimeId ||
-  bookingState.showTime?.id ||
-  bookingState.showtime?.id ||
-  bookingState.show?.showtimeId ||
-  bookingState.show?.id ||
-  "";
+  const showtimeId =
+    bookingState.showtimeId ||
+    bookingState.showTimeId ||
+    bookingState.showTime?.id ||
+    bookingState.showtime?.id ||
+    bookingState.show?.showtimeId ||
+    bookingState.show?.id ||
+    "";
 
-  
   const seatCount =
     Number(bookingState.seatCount) ||
     Number(bookingState.selectedSeats?.length) ||
@@ -149,91 +148,88 @@ const showtimeId =
   // =====================================================
   // PROCEED TO PAYMENT
   // =====================================================
-const handleProceed = async () => {
-  try {
-    // 1. Showtime check
-    if (!showtimeId) {
-      console.error("SHOWTIME ID NOT FOUND");
-      console.log("BOOKING STATE:", bookingState);
-      return;
+  const handleProceed = async () => {
+    try {
+      // 1. Showtime check
+      if (!showtimeId) {
+        console.error("SHOWTIME ID NOT FOUND");
+        console.log("BOOKING STATE:", bookingState);
+        return;
+      }
+
+      // 2. Seats check
+      if (selectedSeats.length === 0) {
+        console.error("NO SEATS SELECTED");
+        return;
+      }
+
+      // 3. Prepare seats for API
+      const seatsForAPI = selectedSeats.map((seat) => ({
+        row: seat.row,
+        column: Number(seat.column),
+        layoutType: seat.layoutType,
+      }));
+
+      // 4. Order payload
+      const orderPayload = {
+        showtimeId: showtimeId,
+
+        seatData: {
+          seats: seatsForAPI,
+        },
+      };
+
+      console.log("ORDER PAYLOAD:", orderPayload);
+
+      // 5. Token
+      const token = localStorage.getItem("accessToken");
+
+      if (!token) {
+        console.error("ACCESS TOKEN NOT FOUND");
+        return;
+      }
+
+      // 6. CALL /orders API
+      const response = await fetch(ORDER_API, {
+        method: "POST",
+
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify(orderPayload),
+      });
+
+      // 7. API response
+      const data = await response.json();
+
+      console.log("ORDER RESPONSE:", data);
+
+      // 8. API error
+      if (!response.ok) {
+        throw new Error(
+          data?.message || data?.error || `Order failed: ${response.status}`,
+        );
+      }
+
+      // 9. Payment URL check
+      if (!data?.paymentUrl) {
+        console.error("PAYMENT URL NOT FOUND");
+        console.log("API RESPONSE:", data);
+        return;
+      }
+
+      console.log("ORDER ID:", data.orderId);
+      console.log("PAYMENT URL:", data.paymentUrl);
+
+      // 10. REDIRECT TO STRIPE
+      window.location.href = data.paymentUrl;
+    } catch (error) {
+      console.error("ORDER ERROR:", error);
     }
-
-    // 2. Seats check
-    if (selectedSeats.length === 0) {
-      console.error("NO SEATS SELECTED");
-      return;
-    }
-
-    // 3. Prepare seats for API
-    const seatsForAPI = selectedSeats.map((seat) => ({
-      row: seat.row,
-      column: Number(seat.column),
-      layoutType: seat.layoutType,
-    }));
-
-    // 4. Order payload
-    const orderPayload = {
-      showtimeId: showtimeId,
-
-      seatData: {
-        seats: seatsForAPI,
-      },
-    };
-
-    console.log("ORDER PAYLOAD:", orderPayload);
-
-    // 5. Token
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      console.error("ACCESS TOKEN NOT FOUND");
-      return;
-    }
-
-    // 6. CALL /orders API
-    const response = await fetch(ORDER_API, {
-      method: "POST",
-
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-
-      body: JSON.stringify(orderPayload),
-    });
-
-    // 7. API response
-    const data = await response.json();
-
-    console.log("ORDER RESPONSE:", data);
-
-    // 8. API error
-    if (!response.ok) {
-      throw new Error(
-        data?.message ||
-          data?.error ||
-          `Order failed: ${response.status}`
-      );
-    }
-
-    // 9. Payment URL check
-    if (!data?.paymentUrl) {
-      console.error("PAYMENT URL NOT FOUND");
-      console.log("API RESPONSE:", data);
-      return;
-    }
-
-    console.log("ORDER ID:", data.orderId);
-    console.log("PAYMENT URL:", data.paymentUrl);
-
-    // 10. REDIRECT TO STRIPE
-    window.location.href = data.paymentUrl;
-
-  } catch (error) {
-    console.error("ORDER ERROR:", error);
-  }
-};
+  };
   // =====================================================
   // BACKGROUND
   // =====================================================
@@ -280,6 +276,11 @@ const handleProceed = async () => {
             "
       >
         <div
+          style={{
+            width: "324px",
+            height: "563px",
+            clipPath: `path("M 6 0 H 318 Q 324 0 324 6 V 280 A 13 13 0 0 0 324 306 V 557 Q 324 563 318 563 H 6 Q 0 563 0 557 V 306 A 13 13 0 0 0 0 280 V 6 Q 0 0 6 0 Z")`,
+          }}
           className="
                 w-full
                 max-w-[324px]
@@ -393,41 +394,6 @@ const handleProceed = async () => {
     CUT / DIVIDER
 ================================================= */}
 
-          <div className="relative h-[4px]">
-            {/* LEFT CURVE */}
-            <div
-              className="
-      absolute
-      left-0
-      top-1/2
-      h-[22px]
-      w-[22px]
-      -translate-x-1/2
-      -translate-y-1/2
-      rounded-full
-      border
-      border-[#1090DF]
-      bg-white
-    "
-            />
-
-            {/* RIGHT CURVE */}
-            <div
-              className="
-      absolute
-      right-0
-      top-1/2
-      h-[22px]
-      w-[22px]
-      translate-x-1/2
-      -translate-y-1/2
-      rounded-full
-      border
-      border-[#1090DF]
-      bg-white
-    "
-            />
-          </div>
           {/* =================================================
                 TRANSACTION DETAIL
             ================================================= */}
