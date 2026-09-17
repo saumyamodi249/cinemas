@@ -456,7 +456,7 @@ const MovieDetails = () => {
                         setSelectedDate(date);
                         setSelectedTime(null);
                       }}
-                      className={`flex h-[72px] w-[82px] shrink-0 flex-col items-center justify-center rounded-lg border text-sm ${
+                      className={`flex h-18 w-20.5 shrink-0 flex-col items-center justify-center rounded-lg border text-sm ${
                         selected
                           ? "border-[#1090DF] bg-[#1090DF] text-white"
                           : "border-gray-300 bg-white text-gray-700"
@@ -538,7 +538,7 @@ const MovieDetails = () => {
                         type="button"
                         onClick={() => setSelectedTime(item)}
                         className={`
-            flex h-9 min-w-[60px]
+            flex h-9 min-w-15
             items-center justify-center
             rounded-sm border
             px-2 text-[10px]
@@ -571,7 +571,7 @@ const MovieDetails = () => {
                 <img
                   src={movie?.image}
                   alt={movie?.name}
-                  className="h-[320px] w-[320px] rounded-xl object-cover shadow-md"
+                  className="h-80 w-[320px] rounded-xl object-cover shadow-md"
                 />
               </div>
 
@@ -593,7 +593,7 @@ const MovieDetails = () => {
 
                   <div className="mt-4 w-full space-y-2 text-sm">
                     <div className="flex">
-                      <span className="w-[80px] shrink-0 text-gray-500">
+                      <span className="w-20 shrink-0 text-gray-500">
                         Duration
                       </span>
 
@@ -603,7 +603,7 @@ const MovieDetails = () => {
                     </div>
 
                     <div className="flex">
-                      <span className="w-[80px] shrink-0 text-gray-500">
+                      <span className="w-20 shrink-0 text-gray-500">
                         Language
                       </span>
 
@@ -613,7 +613,7 @@ const MovieDetails = () => {
                     </div>
 
                     <div className="flex">
-                      <span className="w-[80px] shrink-0 text-gray-500">
+                      <span className="w-20 shrink-0 text-gray-500">
                         Type
                       </span>
 
@@ -625,7 +625,7 @@ const MovieDetails = () => {
                       BOOKING BOX
                   ================================================= */}
 
-                  <div className="mt-6 min-h-[250px] w-full rounded-xl border border-[#1090DF] bg-white/80 p-10">
+                  <div className="mt-6 min-h-62.5 w-full rounded-xl border border-[#1090DF] bg-white/80 p-10">
                     {/* THEATER */}
 
                     {selectedTheater && (

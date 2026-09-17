@@ -1,4 +1,8 @@
-
+//ye Home component hai. Iska main kaam hai:
+//1.Login ke baad movies API se movies lana
+//2.Movies screen par dikhana
+//3.Theater tab click hone par theaters API se theaters lana
+//4.Movie/theater par click karke detail page par navigate karna
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -32,10 +36,10 @@ const Home = () => {
     };
 
     fetchMovies();
-  }, []);
+  }, []);//e useEffect component ke first load par ek baar chale.
 
   useEffect(() => {
-    if (activeTab !== "theater") return;
+    if (activeTab !== "theater") return;//Agar Theater tab selected nahi hai, API mat call karo.
 
     const fetchTheaters = async () => {
       try {
@@ -52,7 +56,7 @@ const Home = () => {
     };
 
     fetchTheaters();
-  }, [activeTab]);
+  }, [activeTab]);//Ye effect activeTab change hone par chalega
 
   return (
     <main
@@ -262,7 +266,7 @@ const Home = () => {
                       onClick={() =>
                         navigate(`/theaters/${theaterId}`)
                       }
-                      className="group flex min-h-[66px] w-full cursor-pointer items-center justify-between rounded-md border border-gray-200 bg-white/40 px-3 py-2 transition-all duration-200 hover:border-[#1090DF] hover:bg-white"
+                      className="group flex min-h-16.5 w-full cursor-pointer items-center justify-between rounded-md border border-gray-200 bg-white/40 px-3 py-2 transition-all duration-200 hover:border-[#1090DF] hover:bg-white"
                     >
 
                       <div className="min-w-0 flex-1">

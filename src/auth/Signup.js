@@ -5,9 +5,9 @@ export const signupUser = async (
   firstName,
   lastName,
   email,
-  password
+  password //Isko 4 values chahiye:
 ) => {
-  const response = await fetch(`${API_URL}/auth/signup`, {
+  const response = await fetch(`${API_URL}/auth/signup`, {//await: Backend ka response aane ka wait karo.
     method: "POST",
     headers: {
       "Content-Type": "application/json",

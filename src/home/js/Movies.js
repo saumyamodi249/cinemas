@@ -4,6 +4,8 @@ const API_URL =
 export const getMovies = async () => {
   const token =
     localStorage.getItem("accessToken");
+    //Login ke time tumne token save kiya tha:
+    //Ab yahan wahi token wapas nikala ja raha hai.
 
   if (!token) {
     throw new Error(
@@ -15,7 +17,7 @@ export const getMovies = async () => {
     method: "GET",
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,//Bearer:Backend is token ko check karke decide karega ki user authenticated hai ya nahi.
     },
   });
 
