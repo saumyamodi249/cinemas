@@ -1,28 +1,14 @@
-const API_BASE_URL =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000";
+import { API_BASE_URL, getAuthHeaders } from "../config/api";
 
 /*
 =====================================================
 GET SCREENS FOR THEATER
 =====================================================
 */
-const getHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("Login token not found");
-  }
-
-  return {
-    Accept: "*/*",
-    Authorization: `Bearer ${token}`,
-  };
-};
-
 export const getTheaterScreens = async (screenId) => {
   const response = await fetch(`${API_BASE_URL}/screens/${screenId}`, {
     method: "GET",
-    headers: getHeaders(),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {

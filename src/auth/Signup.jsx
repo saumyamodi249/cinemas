@@ -26,7 +26,7 @@ const Signup = () => {
   };
 
   const handleSignup = async (e) => {
-    e.preventDefault(); // Browser ka default form submit/reload rokta hai.
+    e.preventDefault(); // Prevent default browser form submit/reload
 
     setMessage("");
     setLoading(true);

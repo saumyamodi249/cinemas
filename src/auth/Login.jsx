@@ -26,7 +26,7 @@ const Login = () => {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Ye line reload ko rok deti hai.
+    e.preventDefault(); // Prevent form submission reload
 
     setMessage("");
     setLoading(true);
@@ -35,19 +35,16 @@ const Login = () => {
       const response = await loginUser(
         formData.email,
         formData.password
-      ); // api call
+      );
 
-      // API response se token nikalo
+      // Extract accessToken from response
       const token = response?.data?.accessToken;
 
       if (token) {
-        // Token browser mein save karo
+        // Persist token in browser
         localStorage.setItem("accessToken", token);
 
-        // Login successful
         setMessage("Login successful!");
-
-        // Home page par bhejo
         navigate("/home");
       } else {
         setMessage("Login failed. Token not received.");

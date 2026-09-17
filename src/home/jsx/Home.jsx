@@ -1,8 +1,10 @@
-//ye Home component hai. Iska main kaam hai:
-//1.Login ke baad movies API se movies lana
-//2.Movies screen par dikhana
-//3.Theater tab click hone par theaters API se theaters lana
-//4.Movie/theater par click karke detail page par navigate karna
+/**
+ * Home component:
+ * 1. Fetches current movies on initial mount
+ * 2. Displays movie catalog
+ * 3. Fetches theater listings when Theater tab is selected
+ * 4. Navigates to movie/theater details upon selection
+ */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +25,7 @@ const Home = () => {
   const [theaterLoading, setTheaterLoading] = useState(false);
   const [theaterError, setTheaterError] = useState("");
 
+  // Fetch movies on component mount
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -36,10 +39,11 @@ const Home = () => {
     };
 
     fetchMovies();
-  }, []);//e useEffect component ke first load par ek baar chale.
+  }, []);
 
+  // Fetch theaters whenever the active tab switches to "theater"
   useEffect(() => {
-    if (activeTab !== "theater") return;//Agar Theater tab selected nahi hai, API mat call karo.
+    if (activeTab !== "theater") return;
 
     const fetchTheaters = async () => {
       try {
@@ -56,7 +60,7 @@ const Home = () => {
     };
 
     fetchTheaters();
-  }, [activeTab]);//Ye effect activeTab change hone par chalega
+  }, [activeTab]);
 
   return (
     <main

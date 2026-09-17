@@ -68,7 +68,7 @@ const Screen = () => {
   bookingState.selectedShowTime?.id ||
   null;
 
-  // ShowTime agar previous page se aa raha hai
+  // If showTime was passed from the previous route state
   const passedShowTime =
     bookingState.showTime ||
     bookingState.selectedShowTime ||

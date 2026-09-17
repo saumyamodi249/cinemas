@@ -1,24 +1,12 @@
-const THEATER_API =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000/theaters";
+import { API_BASE_URL, getAuthHeaders } from "../../config/api";
 
-const getHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("Login token not found");
-  }
-
-  return {
-    Accept: "*/*",
-    Authorization: `Bearer ${token}`,
-  };
-};
+const THEATER_API = `${API_BASE_URL}/theaters`;
 
 // ALL THEATERS
 export const getTheaters = async () => {
   const response = await fetch(THEATER_API, {
     method: "GET",
-    headers: getHeaders(),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -34,7 +22,7 @@ export const getTheaters = async () => {
 export const getTheaterDetails = async (theaterId) => {
   const response = await fetch(`${THEATER_API}/${theaterId}`, {
     method: "GET",
-    headers: getHeaders(),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -50,7 +38,7 @@ export const getTheaterDetails = async (theaterId) => {
 export const getTheaterMovies = async (theaterId) => {
   const response = await fetch(`${THEATER_API}/${theaterId}/movies`, {
     method: "GET",
-    headers: getHeaders(),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -69,7 +57,7 @@ export const getTheaterShows = async (theaterId, date) => {
     `${THEATER_API}/${theaterId}/shows?date=${encodeURIComponent(date)}`,
     {
       method: "GET",
-      headers: getHeaders(),
+      headers: getAuthHeaders(),
     },
   );
 
@@ -84,10 +72,10 @@ export const getTheaterShows = async (theaterId, date) => {
 
 export const getShowTimesByDate = async (movieId, date) => {
   const response = await fetch(
-    `http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000/show-times/${movieId}/by-date?date=${date}`,
+    `${API_BASE_URL}/show-times/${movieId}/by-date?date=${date}`,
     {
       method: "GET",
-      headers: getHeaders(),
+      headers: getAuthHeaders(),
     },
   );
 
@@ -100,10 +88,10 @@ export const getShowTimesByDate = async (movieId, date) => {
 
 export const getScreenById = async (screenId) => {
   const response = await fetch(
-    `http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000/screens/${screenId}`,
+    `${API_BASE_URL}/screens/${screenId}`,
     {
       method: "GET",
-      headers: getHeaders(),
+      headers: getAuthHeaders(),
     },
   );
 

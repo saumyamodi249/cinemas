@@ -133,15 +133,14 @@ const MovieDetails = () => {
             ? response.data
             : [];
 
-        // IMPORTANT:
-        // Sirf currently selected movie ko find karo
+        // Find the currently selected movie
         const currentMovie = moviesList.find((item) => {
           const apiMovieId = item?.id || item?.movieId || item?.movie?.id;
 
           return String(apiMovieId) === String(movie.id);
         });
 
-        // Sirf selected movie ke showTimes
+        // Extract showTimes for the selected movie
         const apiShowTimes = Array.isArray(currentMovie?.showTimes)
           ? currentMovie.showTimes
           : [];

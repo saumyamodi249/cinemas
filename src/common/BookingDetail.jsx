@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-const ORDER_API =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000/orders";
+import { API_BASE_URL, getAuthHeaders } from "../config/api";
+
+const ORDER_API = `${API_BASE_URL}/orders`;
 const BookingDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -92,12 +93,12 @@ const BookingDetail = () => {
       return "-";
     }
 
-    // Agar already simple time hai, jaise "18:30"
+    // If already in simple time format, e.g. "18:30"
     if (/^\d{1,2}:\d{2}/.test(String(rawTime))) {
       return String(rawTime).slice(0, 5);
     }
 
-    // Agar ISO date-time hai
+    // If ISO date-time string
     const parsedTime = new Date(rawTime);
 
     if (Number.isNaN(parsedTime.getTime())) {
@@ -115,38 +116,31 @@ const BookingDetail = () => {
   // SEAT NAMES
   // =====================================================
 
-  const seatNames = selectedSeats
-    .map((seat) => {
-      return (
-        seat?.label ||
-        seat?.name ||
-        `${seat?.row || ""}${seat?.number || seat?.column || ""}`
-      );
-    })
-    .filter(Boolean);
-
-  // =====================================================
-  // SUBTOTAL
-  // =====================================================
-
-  const subtotal = useMemo(() => {
-    return selectedSeats.reduce((total, seat) => {
-      return total + Number(seat?.price || seat?.sectionPrice || 0);
-    }, 0);
+  const seatNames = useMemo(() => {
+    return selectedSeats.map((seat) => `${seat.row}${seat.column}`).join(", ");
   }, [selectedSeats]);
 
   // =====================================================
-  // SERVICE CHARGE
-  // =====================================================
-  const serviceCharge = 50;
-  // =====================================================
-  // TOTAL
+  // PRICE BREAKDOWN
   // =====================================================
 
-  const totalPayment = subtotal + serviceCharge;
+  const ticketPrice = useMemo(() => {
+    return selectedSeats.reduce((sum, seat) => sum + (seat.price || 0), 0);
+  }, [selectedSeats]);
+
+  const convenienceFee = useMemo(() => {
+    return selectedSeats.length > 0 ? 30 : 0;
+  }, [selectedSeats]);
+
+  const totalAmount = useMemo(() => {
+    return ticketPrice + convenienceFee;
+  }, [ticketPrice, convenienceFee]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // =====================================================
-  // PROCEED TO PAYMENT
+  // HANDLE PROCEED / PAYMENT
   // =====================================================
   const handleProceed = async () => {
     try {
@@ -181,24 +175,10 @@ const BookingDetail = () => {
 
       console.log("ORDER PAYLOAD:", orderPayload);
 
-      // 5. Token
-      const token = localStorage.getItem("accessToken");
-
-      if (!token) {
-        console.error("ACCESS TOKEN NOT FOUND");
-        return;
-      }
-
-      // 6. CALL /orders API
+      // 5. CALL /orders API
       const response = await fetch(ORDER_API, {
         method: "POST",
-
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(orderPayload),
       });
 

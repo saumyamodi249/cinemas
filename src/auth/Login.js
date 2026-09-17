@@ -1,8 +1,7 @@
-const API_URL =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000";
+import { API_BASE_URL } from "../config/api";
 
 export const loginUser = async (email, password) => {
-  const response = await fetch(`${API_URL}/auth/login`, {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

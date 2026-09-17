@@ -1,13 +1,12 @@
-const API_URL =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000";
+import { API_BASE_URL } from "../config/api";
 
 export const signupUser = async (
   firstName,
   lastName,
   email,
-  password //Isko 4 values chahiye:
+  password
 ) => {
-  const response = await fetch(`${API_URL}/auth/signup`, {//await: Backend ka response aane ka wait karo.
+  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

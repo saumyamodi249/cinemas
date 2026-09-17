@@ -1,18 +1,4 @@
-const API_BASE_URL =
-  "http://ec2-3-111-219-88.ap-south-1.compute.amazonaws.com:3000";
-
-const getHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("Authentication token not found");
-  }
-
-  return {
-    Accept: "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+import { API_BASE_URL, getAuthHeaders } from "../../config/api";
 
 // =====================================================
 // GET MOVIE DETAILS
@@ -27,7 +13,7 @@ export const getMovieDetails = async (id) => {
     `${API_BASE_URL}/movies/${id}`,
     {
       method: "GET",
-      headers: getHeaders(),
+      headers: getAuthHeaders(),
     }
   );
 
@@ -62,7 +48,7 @@ export const getMovieShowTimes = async (
     )}`,
     {
       method: "GET",
-      headers: getHeaders(),
+      headers: getAuthHeaders(),
     }
   );
 
